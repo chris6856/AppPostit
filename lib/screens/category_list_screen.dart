@@ -17,20 +17,61 @@ class CategoryListScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AppPostIt'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.keyboard_outlined),
-            tooltip: 'Set up the AppPostIt keyboard',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const KeyboardSetupScreen()),
-            ),
+        backgroundColor: const Color(0xFF1788F8),
+        foregroundColor: Colors.white,
+        flexibleSpace: Opacity(
+          opacity: 0.5,
+          child: Image.asset(
+            'assets/icon/app_icon.png',
+            fit: BoxFit.cover,
           ),
-          IconButton(
-            icon: const Icon(Icons.help_outline),
-            tooltip: 'How AppPostIt works',
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const HowItWorksScreen()),
+        ),
+        title: const Text(
+          'AppPostIt',
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        actions: [
+          PopupMenuButton<String>(
+            tooltip: 'User Management',
+            onSelected: (value) {
+              if (value == 'keyboard_setup') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const KeyboardSetupScreen(),
+                  ),
+                );
+              } else if (value == 'how_it_works') {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const HowItWorksScreen()),
+                );
+              }
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(
+                value: 'keyboard_setup',
+                child: Text('How to setup interactive keyboard'),
+              ),
+              PopupMenuItem(
+                value: 'how_it_works',
+                child: Text('App basic operation'),
+              ),
+            ],
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.manage_accounts_outlined, color: Colors.white),
+                  SizedBox(width: 6),
+                  Text(
+                    'User Management',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
