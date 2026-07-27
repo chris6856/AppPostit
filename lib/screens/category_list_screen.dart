@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/providers.dart';
 import 'category_edit_screen.dart';
+import 'help/faq_screen.dart';
 import 'help/how_it_works_screen.dart';
 import 'help/keyboard_setup_screen.dart';
 import 'post_list_screen.dart';
+
+final Uri _howToVideosUri = Uri.parse('https://www.youtube.com/@AppPostit');
 
 class CategoryListScreen extends ConsumerWidget {
   const CategoryListScreen({super.key});
@@ -33,17 +37,36 @@ class CategoryListScreen extends ConsumerWidget {
         actions: [
           PopupMenuButton<String>(
             tooltip: 'User Management',
-            onSelected: (value) {
-              if (value == 'keyboard_setup') {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => const KeyboardSetupScreen(),
-                  ),
-                );
-              } else if (value == 'how_it_works') {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const HowItWorksScreen()),
-                );
+            onSelected: (value) async {
+              switch (value) {
+                case 'keyboard_setup':
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const KeyboardSetupScreen(),
+                    ),
+                  );
+                case 'how_it_works':
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const HowItWorksScreen(),
+                    ),
+                  );
+                case 'faq':
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const FaqScreen()),
+                  );
+                case 'how_to_videos':
+                  final launched = await launchUrl(
+                    _howToVideosUri,
+                    mode: LaunchMode.inAppWebView,
+                  );
+                  if (!launched && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text("Couldn't open the how-to videos link."),
+                      ),
+                    );
+                  }
               }
             },
             itemBuilder: (context) => const [
@@ -54,6 +77,11 @@ class CategoryListScreen extends ConsumerWidget {
               PopupMenuItem(
                 value: 'how_it_works',
                 child: Text('App basic operation'),
+              ),
+              PopupMenuItem(value: 'faq', child: Text('FAQ')),
+              PopupMenuItem(
+                value: 'how_to_videos',
+                child: Text('How-to videos'),
               ),
             ],
             child: const Padding(
@@ -68,6 +96,7 @@ class CategoryListScreen extends ConsumerWidget {
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
+                      fontSize: 18,
                     ),
                   ),
                 ],
