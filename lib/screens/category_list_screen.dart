@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../constants.dart';
 import '../providers/providers.dart';
 import 'category_edit_screen.dart';
 import 'help/faq_screen.dart';
 import 'help/how_it_works_screen.dart';
 import 'help/keyboard_setup_screen.dart';
 import 'post_list_screen.dart';
-
-final Uri _howToVideosUri = Uri.parse('https://www.youtube.com/@AppPostit');
 
 class CategoryListScreen extends ConsumerWidget {
   const CategoryListScreen({super.key});
@@ -25,10 +24,7 @@ class CategoryListScreen extends ConsumerWidget {
         foregroundColor: Colors.white,
         flexibleSpace: Opacity(
           opacity: 0.5,
-          child: Image.asset(
-            'assets/icon/app_icon.png',
-            fit: BoxFit.cover,
-          ),
+          child: Image.asset('assets/icon/app_icon.png', fit: BoxFit.cover),
         ),
         title: const Text(
           'AppPostIt',
@@ -47,17 +43,15 @@ class CategoryListScreen extends ConsumerWidget {
                   );
                 case 'how_it_works':
                   Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const HowItWorksScreen(),
-                    ),
+                    MaterialPageRoute(builder: (_) => const HowItWorksScreen()),
                   );
                 case 'faq':
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const FaqScreen()),
-                  );
+                  Navigator.of(
+                    context,
+                  ).push(MaterialPageRoute(builder: (_) => const FaqScreen()));
                 case 'how_to_videos':
                   final launched = await launchUrl(
-                    _howToVideosUri,
+                    howToVideosUri,
                     mode: LaunchMode.inAppWebView,
                   );
                   if (!launched && context.mounted) {
@@ -105,88 +99,95 @@ class CategoryListScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: categoriesAsync.when(
-        data: (categories) {
-          if (categories.isEmpty) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text(
-                  'Create your first category to start saving posts.',
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            );
-          }
-          return ListView.builder(
-            itemCount: categories.length,
-            itemBuilder: (context, index) {
-              final category = categories[index];
-              return Material(
-                color: index.isEven
-                    ? scheme.surface
-                    : scheme.surfaceContainerHighest,
-                child: ListTile(
-                  title: Text(category.name),
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => PostListScreen(category: category),
+      body: DecoratedBox(
+        decoration: const BoxDecoration(gradient: brandGradient),
+        child: categoriesAsync.when(
+          data: (categories) {
+            if (categories.isEmpty) {
+              return const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text(
+                    'Create your first category to start saving posts.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
                     ),
-                  ),
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (value) async {
-                      if (value == 'edit') {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                CategoryEditScreen(category: category),
-                          ),
-                        );
-                      } else if (value == 'delete') {
-                        final confirmed = await showDialog<bool>(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: const Text('Delete category?'),
-                            content: Text(
-                              'Deleting "${category.name}" will also delete '
-                              'all of its saved posts.',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(ctx).pop(false),
-                                child: const Text('Cancel'),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.of(ctx).pop(true),
-                                child: const Text('Delete'),
-                              ),
-                            ],
-                          ),
-                        );
-                        if (confirmed == true) {
-                          await ref
-                              .read(categoryRepositoryProvider)
-                              .delete(category.id);
-                        }
-                      }
-                    },
-                    itemBuilder: (context) => const [
-                      PopupMenuItem(value: 'edit', child: Text('Edit')),
-                      PopupMenuItem(value: 'delete', child: Text('Delete')),
-                    ],
                   ),
                 ),
               );
-            },
-          );
-        },
-        error: (error, stack) => Center(child: Text('Error: $error')),
-        loading: () => const Center(child: CircularProgressIndicator()),
+            }
+            return ListView.builder(
+              itemCount: categories.length,
+              itemBuilder: (context, index) {
+                final category = categories[index];
+                return Material(
+                  color: index.isEven
+                      ? scheme.surface
+                      : scheme.surfaceContainerHighest,
+                  child: ListTile(
+                    title: Text(category.name),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => PostListScreen(category: category),
+                      ),
+                    ),
+                    trailing: PopupMenuButton<String>(
+                      onSelected: (value) async {
+                        if (value == 'edit') {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  CategoryEditScreen(category: category),
+                            ),
+                          );
+                        } else if (value == 'delete') {
+                          final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Delete category?'),
+                              content: Text(
+                                'Deleting "${category.name}" will also delete '
+                                'all of its saved posts.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.of(ctx).pop(true),
+                                  child: const Text('Delete'),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirmed == true) {
+                            await ref
+                                .read(categoryRepositoryProvider)
+                                .delete(category.id);
+                          }
+                        }
+                      },
+                      itemBuilder: (context) => const [
+                        PopupMenuItem(value: 'edit', child: Text('Edit')),
+                        PopupMenuItem(value: 'delete', child: Text('Delete')),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+          error: (error, stack) => Center(child: Text('Error: $error')),
+          loading: () => const Center(child: CircularProgressIndicator()),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const CategoryEditScreen()),
-        ),
+        onPressed: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const CategoryEditScreen())),
         child: const Icon(Icons.add),
       ),
     );

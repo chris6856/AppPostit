@@ -23,7 +23,10 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [databaseProvider.overrideWithValue(db)],
+        overrides: [
+          databaseProvider.overrideWithValue(db),
+          hasSeenWelcomeProvider.overrideWith((ref) => true),
+        ],
         child: const AppPostItApp(),
       ),
     );
