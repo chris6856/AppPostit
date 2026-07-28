@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FAQ — AppPostIt</title>
+<link rel="icon" href="assets/img/app-icon-120.png" />
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <a href="index.html" class="brand">
+      <img src="assets/img/app-icon-120.png" alt="" />
+      AppPostIt
+    </a>
+    <div class="nav-links">
+      <a href="index.html#how-it-works">How it works</a>
+      <a href="index.html#get-it">Get it</a>
+      <a href="faq.html" class="current">FAQ</a>
+      <a href="contact.html">Contact</a>
+      <a href="index.html#get-it" class="nav-cta">Get AppPostIt</a>
+    </div>
+  </div>
+</nav>
+
+<header class="page-hero">
+  <div class="wrap">
+    <h1>Frequently asked questions</h1>
+    <p>Everything you need to know about how AppPostIt works.</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="content-page">
+
+    <div class="faq-item">
+      <button class="faq-q">How do I save a post?<span class="plus">+</span></button>
+      <div class="faq-a"><p>Open a category from the home screen, tap the + button, type the text you want to reuse (a label is optional), and tap Save.</p></div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q">Where is my data stored?<span class="plus">+</span></button>
+      <div class="faq-a"><p>Everything is saved locally on your device only — there is no account and nothing is sent to the cloud.</p></div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q">Why can't I type freely with the AppPostIt keyboard?<span class="plus">+</span></button>
+      <div class="faq-a"><p>The AppPostIt keyboard is designed to insert a saved post, not replace your regular keyboard for typing. Switch back to your normal keyboard when you're done inserting a post.</p></div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q">How do I edit or delete a category or post?<span class="plus">+</span></button>
+      <div class="faq-a"><p>Tap the menu icon next to any category or post in the list to edit or delete it.</p></div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q">Is my data backed up if I lose my phone?<span class="plus">+</span></button>
+      <div class="faq-a"><p>Not yet — backup and restore isn't available in this version.</p></div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q">What platforms is AppPostIt available on?<span class="plus">+</span></button>
+      <div class="faq-a"><p>AppPostIt is launching first on Android, including the custom keyboard extension. An iOS version is in development.</p></div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q">Is AppPostIt free?<span class="plus">+</span></button>
+      <div class="faq-a"><p>AppPostIt is free to download and use. Pricing details will be shown in the app and on the store listing once it launches.</p></div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q">Does AppPostIt see or record what I type?<span class="plus">+</span></button>
+      <div class="faq-a"><p>No. The keyboard only reads the posts you've saved in the app and inserts the one you tap — it doesn't record, transmit, or store anything else you type.</p></div>
+    </div>
+
+  </div>
+</div>
+
+<footer style="margin-top: 60px;">
+  <div class="wrap">
+    <div class="footer-bottom" style="border-top: 1px solid var(--line); padding-top: 24px;">
+      <span>© 2026 AppPostIt. All rights reserved.</span>
+      <span><a href="privacy.html" style="text-decoration:none;">Privacy</a> · <a href="terms.html" style="text-decoration:none;">Terms</a></span>
+    </div>
+  </div>
+</footer>
+
+<script>
+document.querySelectorAll('.faq-item').forEach(function (item) {
+  var q = item.querySelector('.faq-q');
+  var a = item.querySelector('.faq-a');
+  q.addEventListener('click', function () {
+    var isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item.open').forEach(function (other) {
+      if (other !== item) {
+        other.classList.remove('open');
+        other.querySelector('.faq-a').style.maxHeight = null;
+      }
+    });
+    if (isOpen) {
+      item.classList.remove('open');
+      a.style.maxHeight = null;
+    } else {
+      item.classList.add('open');
+      a.style.maxHeight = a.scrollHeight + 'px';
+    }
+  });
+});
+</script>
+
+</body>
+</html>
