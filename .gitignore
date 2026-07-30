@@ -1,6 +1,9 @@
 # Claude Code local session state
 .claude/
 
+# Website secrets -- never commit API keys
+website/sendgrid-config.php
+
 # Miscellaneous
 *.class
 *.log
