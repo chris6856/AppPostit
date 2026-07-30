@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $name = trim($_POST['name'] ?? '');
 $email = trim($_POST['email'] ?? '');
 $message = trim($_POST['message'] ?? '');
-$honeypot = trim($_POST['website'] ?? '');
+$honeypot = trim($_POST['hp_9f3a'] ?? '');
 
 // Spam trap: bots tend to fill every field, including hidden ones. Pretend
 // success without sending anything.
@@ -33,7 +33,10 @@ $body .= "Name: $name\n";
 $body .= "Email: $email\n\n";
 $body .= "Message:\n$message\n";
 
-$headers = "From: AppPostIt Website <admin@apppostit.com>\r\n";
+// Deliberately NOT sending From the same address it's addressed To --
+// self-to-self mail (From: admin@apppostit.com, To: admin@apppostit.com)
+// is a common spam/loop-detection trigger on shared hosting.
+$headers = "From: AppPostIt Website <noreply@apppostit.com>\r\n";
 $headers .= "Reply-To: $email\r\n";
 $headers .= "X-Mailer: PHP/" . phpversion();
 

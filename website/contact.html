@@ -137,10 +137,13 @@
           <label for="message">Message</label>
           <textarea id="message" name="message" required></textarea>
         </div>
-        <!-- Honeypot field: real visitors never see or fill this in. -->
+        <!-- Honeypot field: real visitors never see or fill this in. Named
+             and labeled deliberately away from anything browser autofill
+             might recognize (e.g. "website", "url", "company"), since
+             autofill can populate a field even when it's hidden with CSS. -->
         <div class="form-field hp-field" aria-hidden="true">
-          <label for="website">Website</label>
-          <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
+          <label for="hp_9f3a">Leave this field blank</label>
+          <input type="text" id="hp_9f3a" name="hp_9f3a" tabindex="-1" autocomplete="off" />
         </div>
         <button type="submit" class="btn btn-outline-dark" id="submit-btn">Send message</button>
       </form>
@@ -166,6 +169,16 @@
     document.getElementById('contact-form').style.display = 'none';
   } else if (params.get('error') === '1') {
     document.getElementById('status-error').classList.add('show');
+  }
+
+  // Belt-and-suspenders: force the honeypot empty right before submit, in
+  // case any browser autofill populated it despite the off-screen hiding.
+  var form = document.getElementById('contact-form');
+  var hp = document.getElementById('hp_9f3a');
+  if (form && hp) {
+    form.addEventListener('submit', function () {
+      hp.value = '';
+    });
   }
 })();
 </script>
