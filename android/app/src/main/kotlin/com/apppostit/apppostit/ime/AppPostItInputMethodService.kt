@@ -14,6 +14,7 @@ import com.apppostit.apppostit.R
 class AppPostItInputMethodService : InputMethodService() {
 
     private lateinit var reader: SqliteReader
+    private lateinit var purchaseStatusReader: PurchaseStatusReader
     private lateinit var categoryChipRow: LinearLayout
     private lateinit var postList: LinearLayout
     private var categories: List<CategoryRow> = emptyList()
@@ -22,6 +23,7 @@ class AppPostItInputMethodService : InputMethodService() {
     override fun onCreate() {
         super.onCreate()
         reader = SqliteReader(this)
+        purchaseStatusReader = PurchaseStatusReader(this)
     }
 
     override fun onCreateInputView(): View {
@@ -41,9 +43,21 @@ class AppPostItInputMethodService : InputMethodService() {
     }
 
     private fun refreshCategories() {
-        categories = reader.getCategories()
         categoryChipRow.removeAllViews()
         postList.removeAllViews()
+
+        val isLocked = !purchaseStatusReader.isPremium() &&
+            reader.getTotalPostCount() >= FREE_POST_LIMIT
+        if (isLocked) {
+            addEmptyMessage(
+                postList,
+                "You've saved $FREE_POST_LIMIT posts. Open AppPostIt to " +
+                    "unlock unlimited categories and posts.",
+            )
+            return
+        }
+
+        categories = reader.getCategories()
 
         if (categories.isEmpty()) {
             addEmptyMessage(postList, "Add a category in AppPostIt to get started.")

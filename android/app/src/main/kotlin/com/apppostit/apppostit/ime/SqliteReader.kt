@@ -54,6 +54,16 @@ class SqliteReader(private val context: Context) {
         } ?: emptyList()
     }
 
+    /** Total post count across all categories -- mirrors the free-tier gate
+     *  the Flutter app enforces (lib/providers/providers.dart). */
+    fun getTotalPostCount(): Int {
+        return withDb { db ->
+            db.rawQuery("SELECT COUNT(*) FROM posts", null).use { cursor ->
+                if (cursor.moveToFirst()) cursor.getInt(0) else 0
+            }
+        } ?: 0
+    }
+
     fun getPosts(categoryId: Long): List<PostRow> {
         return withDb { db ->
             db.rawQuery(

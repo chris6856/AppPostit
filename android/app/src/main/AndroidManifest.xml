@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required for the in_app_purchase plugin's Google Play Billing
+         integration (the unlock-unlimited-posts purchase). -->
+    <uses-permission android:name="com.android.vending.BILLING" />
+
     <application
         android:label="AppPostIt"
         android:name="${applicationName}"

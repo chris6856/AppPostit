@@ -6,6 +6,7 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets('create a category and a post, then see them listed',
@@ -21,11 +22,15 @@ void main() {
     );
     addTearDown(db.close);
 
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           databaseProvider.overrideWithValue(db),
           hasSeenWelcomeProvider.overrideWith((ref) => true),
+          sharedPreferencesProvider.overrideWithValue(prefs),
         ],
         child: const AppPostItApp(),
       ),
