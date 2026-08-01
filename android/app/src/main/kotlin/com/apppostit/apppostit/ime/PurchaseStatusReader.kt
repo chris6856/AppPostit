@@ -6,7 +6,7 @@ import android.content.Context
  *  purchase. Keep in sync with the Flutter side's copy of this limit
  *  (lib/providers/providers.dart's kFreePostLimit), since both enforce
  *  the same gate independently against the same database. */
-const val FREE_POST_LIMIT = 10
+const val FREE_POST_LIMIT = 8
 
 /**
  * Reads the "is_premium" flag the Flutter app writes via shared_preferences.

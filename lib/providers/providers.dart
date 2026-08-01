@@ -13,7 +13,7 @@ const hasSeenWelcomeKey = 'has_seen_welcome';
 /// purchase. Keep in sync with the Android keyboard's own copy of this
 /// limit (android/.../ime/AppPostItInputMethodService.kt), since the
 /// keyboard enforces the same gate natively against the same database.
-const int kFreePostLimit = 10;
+const int kFreePostLimit = 8;
 
 /// Overridden in main() with the SharedPreferences instance loaded before
 /// runApp(), so it's available synchronously everywhere else.
