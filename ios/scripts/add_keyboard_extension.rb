@@ -31,6 +31,22 @@ runner_target.build_configurations.each do |config|
   config.build_settings['CODE_SIGN_ENTITLEMENTS'] = 'Runner/Runner.entitlements'
 end
 
+# --- Runner: add AppGroupPlugin.swift to its compile sources ------------
+# A file sitting on disk in ios/Runner/ isn't automatically compiled --
+# Xcode only builds what's referenced in the project file, which is
+# normally handled by the "New File" wizard. AppGroupPlugin.swift was
+# added by hand (no local Xcode to do this the normal way), so wire it in
+# here.
+runner_group = project.main_group['Runner']
+raise "Runner group not found in project" unless runner_group
+
+unless runner_group['AppGroupPlugin.swift']
+  file_ref = runner_group.new_reference(
+    File.expand_path('../Runner/AppGroupPlugin.swift', __dir__)
+  )
+  runner_target.source_build_phase.add_file_reference(file_ref)
+end
+
 # --- Keyboard extension target: create if missing -----------------------
 keyboard_target = project.targets.find { |t| t.name == EXTENSION_NAME }
 
