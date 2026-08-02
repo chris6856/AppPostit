@@ -10,13 +10,13 @@ workflows:
       # both projects are under the same Codemagic team.
       app_store_connect: allergybuster
     environment:
-      ios_signing:
-        distribution_type: app_store
-        # Automatic signing covers both targets as long as their bundle
-        # IDs (com.apppostit.apppostit and com.apppostit.apppostit.keyboard)
-        # both exist as App IDs in your Apple Developer account with the
-        # App Groups capability enabled -- see the setup checklist.
-        bundle_identifier: com.apppostit.apppostit
+      # No `ios_signing:` block here on purpose -- that's Codemagic's own
+      # automatic signing shortcut, and it only takes a single bundle ID.
+      # It runs before any of our scripts, so with two targets to sign it
+      # fails immediately on the one bundle ID it does know about, before
+      # the "Set up code signing for both targets" script below (which
+      # explicitly handles both) ever gets a chance to run. Signing is
+      # handled entirely by that script instead.
       vars:
         BUNDLE_ID: "com.apppostit.apppostit"
         KEYBOARD_BUNDLE_ID: "com.apppostit.apppostit.keyboard"
