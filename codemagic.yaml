@@ -10,6 +10,12 @@ workflows:
       # both projects are under the same Codemagic team.
       app_store_connect: AllergyBuster
     environment:
+      # Loads CERTIFICATE_PRIVATE_KEY (used by `fetch-signing-files
+      # --create` below to generate a real iOS distribution certificate)
+      # from the "ios_signing" group configured under this app's
+      # Environment variables in Codemagic.
+      groups:
+        - ios_signing
       # No `ios_signing:` block here on purpose -- that's Codemagic's own
       # automatic signing shortcut, and it only takes a single bundle ID.
       # It runs before any of our scripts, so with two targets to sign it
