@@ -15,6 +15,7 @@ class AppPostItInputMethodService : InputMethodService() {
 
     private lateinit var reader: SqliteReader
     private lateinit var purchaseStatusReader: PurchaseStatusReader
+    private lateinit var usageTracker: UsageTracker
     private lateinit var categoryChipRow: LinearLayout
     private lateinit var postList: LinearLayout
     private var categories: List<CategoryRow> = emptyList()
@@ -24,6 +25,7 @@ class AppPostItInputMethodService : InputMethodService() {
         super.onCreate()
         reader = SqliteReader(this)
         purchaseStatusReader = PurchaseStatusReader(this)
+        usageTracker = UsageTracker(this)
     }
 
     override fun onCreateInputView(): View {
@@ -47,12 +49,12 @@ class AppPostItInputMethodService : InputMethodService() {
         postList.removeAllViews()
 
         val isLocked = !purchaseStatusReader.isPremium() &&
-            reader.getTotalPostCount() >= FREE_POST_LIMIT
+            usageTracker.getInsertCount() >= FREE_POST_LIMIT
         if (isLocked) {
             addEmptyMessage(
                 postList,
-                "You've saved $FREE_POST_LIMIT posts. Open AppPostIt to " +
-                    "unlock unlimited categories and posts.",
+                "You've used your $FREE_POST_LIMIT free posts. Open AppPostIt " +
+                    "to unlock unlimited posting.",
             )
             return
         }
@@ -110,6 +112,12 @@ class AppPostItInputMethodService : InputMethodService() {
             }
             row.setOnClickListener {
                 currentInputConnection?.commitText(post.body, 1)
+                usageTracker.recordInsert()
+                if (!purchaseStatusReader.isPremium() &&
+                    usageTracker.getInsertCount() >= FREE_POST_LIMIT
+                ) {
+                    refreshCategories()
+                }
             }
             postList.addView(row)
         }

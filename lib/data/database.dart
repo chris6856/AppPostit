@@ -5,6 +5,7 @@ import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import '../platform/app_group_path_channel.dart';
 import 'tables.dart';
 
 part 'database.g.dart';
@@ -32,8 +33,26 @@ class AppDatabase extends _$AppDatabase {
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, kDatabaseFileName));
+    // On iOS the keyboard extension is a separate process/sandbox, so the
+    // database has to live in the shared App Group container rather than
+    // this app's own documents directory (which the extension can't see
+    // at all). Android's keyboard runs in the same app package/UID, so it
+    // can already read the default documents directory directly.
+    final String dbFolderPath;
+    if (Platform.isIOS) {
+      final containerPath = await AppGroupPathChannel.getContainerPath();
+      if (containerPath == null) {
+        throw StateError(
+          'App Group container path was null -- check that both the '
+          'Runner and keyboard extension targets have the App Group '
+          'entitlement configured.',
+        );
+      }
+      dbFolderPath = containerPath;
+    } else {
+      dbFolderPath = (await getApplicationDocumentsDirectory()).path;
+    }
+    final file = File(p.join(dbFolderPath, kDatabaseFileName));
     return NativeDatabase.createInBackground(
       file,
       setup: (database) {

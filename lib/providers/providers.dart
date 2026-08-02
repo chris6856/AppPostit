@@ -6,14 +6,19 @@ import '../data/database.dart';
 import '../data/repositories/category_repository.dart';
 import '../data/repositories/post_repository.dart';
 import '../services/purchase_service.dart';
+import '../services/shared_storage.dart';
 
 const hasSeenWelcomeKey = 'has_seen_welcome';
 
-/// Posts beyond this many (across all categories) require the unlock
-/// purchase. Keep in sync with the Android keyboard's own copy of this
-/// limit (android/.../ime/AppPostItInputMethodService.kt), since the
-/// keyboard enforces the same gate natively against the same database.
+/// Insertions beyond this many (a saved post actually typed into another
+/// app via the keyboard) require the unlock purchase. Keep in sync with
+/// the Android keyboard's own copy of this limit
+/// (android/.../ime/AppPostItInputMethodService.kt), since the keyboard
+/// enforces the same gate natively -- it's also the only place that
+/// increments the counter, via UsageTracker.kt.
 const int kFreePostLimit = 8;
+
+const String insertCountKey = 'insert_count';
 
 /// Overridden in main() with the SharedPreferences instance loaded before
 /// runApp(), so it's available synchronously everywhere else.
@@ -52,8 +57,21 @@ final postsStreamProvider =
   return ref.watch(postRepositoryProvider).watchByCategory(categoryId);
 });
 
-final totalPostCountProvider = StreamProvider<int>((ref) {
-  return ref.watch(postRepositoryProvider).watchTotalCount();
+final sharedStorageProvider = Provider<SharedStorage>((ref) {
+  return SharedStorage(ref.watch(sharedPreferencesProvider));
+});
+
+/// The keyboard (UsageTracker.kt on Android, the equivalent iOS extension
+/// code) is the only thing that increments this. The initial value here is
+/// a same-platform-instant guess (correct on Android via the shared
+/// SharedPreferences file; a stale default on iOS, which has no
+/// synchronous access to the App Group store) -- AppPostItApp corrects it
+/// via SharedStorage right after first frame and again on every resume,
+/// since the write always happens from a native code path outside this
+/// instance's awareness.
+final insertCountProvider = StateProvider<int>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return prefs.getInt(insertCountKey) ?? 0;
 });
 
 final isPremiumProvider = StateProvider<bool>((ref) {
@@ -62,9 +80,9 @@ final isPremiumProvider = StateProvider<bool>((ref) {
 });
 
 final purchaseServiceProvider = Provider<PurchaseService>((ref) {
-  final prefs = ref.watch(sharedPreferencesProvider);
+  final storage = ref.watch(sharedStorageProvider);
   final service = PurchaseService(
-    prefs,
+    storage,
     onPremiumUnlocked: () => ref.read(isPremiumProvider.notifier).state = true,
   );
   ref.onDispose(service.dispose);
@@ -77,10 +95,10 @@ final purchaseInitProvider = FutureProvider<void>((ref) async {
   await ref.watch(purchaseServiceProvider).init();
 });
 
-/// True once the free post limit is reached without a purchase -- gates
+/// True once the free insert limit is reached without a purchase -- gates
 /// the entire app behind PaywallScreen when true.
 final isLockedProvider = Provider<bool>((ref) {
   if (ref.watch(isPremiumProvider)) return false;
-  final count = ref.watch(totalPostCountProvider).value ?? 0;
+  final count = ref.watch(insertCountProvider);
   return count >= kFreePostLimit;
 });

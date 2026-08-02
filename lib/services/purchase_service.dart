@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-/// Must exactly match the in-app product ID created in Play Console.
+import 'shared_storage.dart';
+
+/// Must exactly match the in-app product ID created in Play Console / App
+/// Store Connect.
 const String kPremiumProductId = 'apppostit_unlimited';
 const String kIsPremiumKey = 'is_premium';
 
@@ -13,16 +15,14 @@ const String kIsPremiumKey = 'is_premium';
 /// environment, etc.), and none of that should ever crash the app -- it
 /// should just mean the paywall's buy button doesn't work yet.
 class PurchaseService {
-  PurchaseService(this._prefs, {this.onPremiumUnlocked});
+  PurchaseService(this._storage, {this.onPremiumUnlocked});
 
-  final SharedPreferences _prefs;
+  final SharedStorage _storage;
   final void Function()? onPremiumUnlocked;
 
   final InAppPurchase _iap = InAppPurchase.instance;
   StreamSubscription<List<PurchaseDetails>>? _subscription;
   ProductDetails? productDetails;
-
-  bool get isPremium => _prefs.getBool(kIsPremiumKey) ?? false;
 
   Future<void> init() async {
     try {
@@ -73,7 +73,7 @@ class PurchaseService {
       if (purchase.productID == kPremiumProductId &&
           (purchase.status == PurchaseStatus.purchased ||
               purchase.status == PurchaseStatus.restored)) {
-        await _prefs.setBool(kIsPremiumKey, true);
+        await _storage.setBool(kIsPremiumKey, true);
         onPremiumUnlocked?.call();
       }
       if (purchase.pendingCompletePurchase) {

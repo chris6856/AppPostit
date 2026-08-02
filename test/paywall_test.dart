@@ -1,6 +1,5 @@
 import 'package:apppostit/data/database.dart';
 import 'package:apppostit/data/repositories/category_repository.dart';
-import 'package:apppostit/data/repositories/post_repository.dart';
 import 'package:apppostit/main.dart';
 import 'package:apppostit/providers/providers.dart';
 import 'package:drift/drift.dart';
@@ -11,7 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   testWidgets(
-      'shows the paywall once the free post limit is reached, '
+      'shows the paywall once the free insert limit is reached, '
       'even mid-navigation', (tester) async {
     final db = AppDatabase.forTesting(
       DatabaseConnection(
@@ -21,13 +20,11 @@ void main() {
     );
     addTearDown(db.close);
 
-    final categoryId = await CategoryRepository(db).create('Allergies');
-    final postRepo = PostRepository(db);
-    for (var i = 0; i < kFreePostLimit; i++) {
-      await postRepo.create(categoryId: categoryId, body: 'Post $i');
-    }
-
-    SharedPreferences.setMockInitialValues({});
+    // Inserts are only ever recorded by the keyboard's native UsageTracker,
+    // never by the Dart side -- simulate that by seeding the pref directly.
+    SharedPreferences.setMockInitialValues({
+      insertCountKey: kFreePostLimit,
+    });
     final prefs = await SharedPreferences.getInstance();
 
     await tester.pumpWidget(
@@ -42,7 +39,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text("You've saved $kFreePostLimit posts!"), findsOneWidget);
+    expect(
+      find.text("You've used your $kFreePostLimit free posts!"),
+      findsOneWidget,
+    );
     expect(find.text('Allergies'), findsNothing);
   });
 
@@ -55,13 +55,12 @@ void main() {
     );
     addTearDown(db.close);
 
-    final categoryId = await CategoryRepository(db).create('Allergies');
-    final postRepo = PostRepository(db);
-    for (var i = 0; i < kFreePostLimit + 5; i++) {
-      await postRepo.create(categoryId: categoryId, body: 'Post $i');
-    }
+    await CategoryRepository(db).create('Allergies');
 
-    SharedPreferences.setMockInitialValues({'is_premium': true});
+    SharedPreferences.setMockInitialValues({
+      insertCountKey: kFreePostLimit + 5,
+      'is_premium': true,
+    });
     final prefs = await SharedPreferences.getInstance();
 
     await tester.pumpWidget(
@@ -76,7 +75,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text("You've saved $kFreePostLimit posts!"), findsNothing);
+    expect(
+      find.text("You've used your $kFreePostLimit free posts!"),
+      findsNothing,
+    );
     expect(find.text('Allergies'), findsOneWidget);
   });
 }

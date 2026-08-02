@@ -14,11 +14,6 @@ class PostRepository {
         .watch();
   }
 
-  /// Total post count across all categories -- used to gate the free tier.
-  Stream<int> watchTotalCount() {
-    return _db.select(_db.posts).watch().map((rows) => rows.length);
-  }
-
   Future<int> create({
     required int categoryId,
     required String body,

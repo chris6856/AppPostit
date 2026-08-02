@@ -1,0 +1,58 @@
+workflows:
+  ios-testflight:
+    name: AppPostIt iOS TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      # Name of the App Store Connect API key integration configured under
+      # Codemagic > Teams > Integrations > App Store Connect. Rename this
+      # to match whatever you called it there.
+      app_store_connect: codemagic_api_key
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        # Automatic signing covers both targets as long as their bundle
+        # IDs (com.apppostit.apppostit and com.apppostit.apppostit.keyboard)
+        # both exist as App IDs in your Apple Developer account with the
+        # App Groups capability enabled -- see the setup checklist.
+        bundle_identifier: com.apppostit.apppostit
+      vars:
+        BUNDLE_ID: "com.apppostit.apppostit"
+        KEYBOARD_BUNDLE_ID: "com.apppostit.apppostit.keyboard"
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Add the keyboard extension target
+        script: |
+          gem install xcodeproj --no-document
+          ruby ios/scripts/add_keyboard_extension.rb
+      - name: Get Flutter packages
+        script: |
+          flutter packages pub get
+      - name: Set up code signing for both targets
+        script: |
+          keychain initialize
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+          app-store-connect fetch-signing-files "$KEYBOARD_BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+          keychain add-certificates
+          xcode-project use-profiles
+      - name: Flutter build ipa
+        script: |
+          flutter build ipa --release \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        # Flip to true once you're ready for testers beyond your internal
+        # App Store Connect team, after Apple's (usually automatic) beta
+        # review.
+        beta_groups: []

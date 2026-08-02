@@ -42,7 +42,7 @@ class PaywallScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "You've saved $kFreePostLimit posts!",
+                            "You've used your $kFreePostLimit free posts!",
                             style: Theme.of(context)
                                 .textTheme
                                 .headlineSmall
@@ -51,8 +51,7 @@ class PaywallScreen extends ConsumerWidget {
                           const SizedBox(height: 8),
                           Text(
                             "You've reached the free limit. Unlock "
-                            'unlimited categories and posts to keep '
-                            'going.',
+                            'unlimited posting to keep going.',
                             style: Theme.of(context).textTheme.bodyLarge,
                           ),
                           const SizedBox(height: 24),

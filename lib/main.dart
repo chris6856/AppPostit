@@ -6,6 +6,7 @@ import 'providers/providers.dart';
 import 'screens/category_list_screen.dart';
 import 'screens/paywall_screen.dart';
 import 'screens/welcome_screen.dart';
+import 'services/purchase_service.dart' show kIsPremiumKey;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,11 +19,55 @@ Future<void> main() async {
   );
 }
 
-class AppPostItApp extends ConsumerWidget {
+class AppPostItApp extends ConsumerStatefulWidget {
   const AppPostItApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AppPostItApp> createState() => _AppPostItAppState();
+}
+
+class _AppPostItAppState extends ConsumerState<AppPostItApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // The provider's own initial value is a same-platform-instant guess
+    // (see insertCountProvider's doc comment) -- correct it for real right
+    // after first frame, the same way a resume does.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refreshFromStorage());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Both the insert counter and the premium flag can be written natively
+    // -- the counter by the keyboard extension on every insert, the
+    // premium flag by this same app but (on iOS) through a different
+    // storage path than this cached instance sees. Either way, refresh
+    // from the source of truth whenever the app comes back to the
+    // foreground rather than trusting whatever was cached at launch.
+    if (state == AppLifecycleState.resumed) {
+      _refreshFromStorage();
+    }
+  }
+
+  Future<void> _refreshFromStorage() async {
+    final storage = ref.read(sharedStorageProvider);
+    final count = await storage.getInt(insertCountKey);
+    final premium = await storage.getBool(kIsPremiumKey);
+    if (!mounted) return;
+    ref.read(insertCountProvider.notifier).state = count ?? 0;
+    ref.read(isPremiumProvider.notifier).state = premium ?? false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final hasSeenWelcome = ref.watch(hasSeenWelcomeProvider);
     final isLocked = ref.watch(isLockedProvider);
     // Kick off purchase-service init (product details, restore purchases)
