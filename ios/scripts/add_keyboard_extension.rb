@@ -71,6 +71,20 @@ if keyboard_target.nil?
     build_file.settings = { 'ATTRIBUTES' => ['RemoveHeadersOnCopy'] }
   end
 
+  # Move the embed phase before Flutter's own injected Run Script phases
+  # (e.g. "Thin Binary") -- left at the end (xcodeproj's default), the new
+  # build system can't resolve the implicit ordering between the
+  # extension copy and those scripts' outputs and reports a dependency
+  # cycle during archiving.
+  phases = runner_target.build_phases
+  first_script_index = phases.find_index do |p|
+    p.is_a?(Xcodeproj::Project::Object::PBXShellScriptBuildPhase)
+  end
+  if first_script_index && phases.index(embed_phase) > first_script_index
+    phases.delete(embed_phase)
+    phases.insert(first_script_index, embed_phase)
+  end
+
   # libsqlite3 for SqliteReader.swift's raw C API usage.
   sqlite_ref = project.frameworks_group.new_reference(
     'usr/lib/libsqlite3.tbd'
