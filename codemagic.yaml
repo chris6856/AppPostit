@@ -4,10 +4,11 @@ workflows:
     max_build_duration: 60
     instance_type: mac_mini_m2
     integrations:
-      # Name of the App Store Connect API key integration configured under
-      # Codemagic > Teams > Integrations > App Store Connect. Rename this
-      # to match whatever you called it there.
-      app_store_connect: codemagic_api_key
+      # Reuses the same App Store Connect API key integration set up for
+      # the allergybuster project -- the key's App Manager role is
+      # account-wide, not scoped to one app, so this works as long as
+      # both projects are under the same Codemagic team.
+      app_store_connect: allergybuster
     environment:
       ios_signing:
         distribution_type: app_store
