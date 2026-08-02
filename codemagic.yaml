@@ -8,7 +8,7 @@ workflows:
       # the allergybuster project -- the key's App Manager role is
       # account-wide, not scoped to one app, so this works as long as
       # both projects are under the same Codemagic team.
-      app_store_connect: allergybuster
+      app_store_connect: AllergyBuster
     environment:
       # No `ios_signing:` block here on purpose -- that's Codemagic's own
       # automatic signing shortcut, and it only takes a single bundle ID.
