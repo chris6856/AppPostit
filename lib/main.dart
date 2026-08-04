@@ -7,6 +7,7 @@ import 'screens/category_list_screen.dart';
 import 'screens/paywall_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'services/purchase_service.dart' show kIsPremiumKey;
+import 'services/shared_storage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -64,6 +65,7 @@ class _AppPostItAppState extends ConsumerState<AppPostItApp>
     if (!mounted) return;
     ref.read(insertCountProvider.notifier).state = count ?? 0;
     ref.read(isPremiumProvider.notifier).state = premium ?? false;
+    setState(() {}); // Refresh the TEMPORARY debug banner below.
   }
 
   @override
@@ -85,8 +87,31 @@ class _AppPostItAppState extends ConsumerState<AppPostItApp>
       // screen with the paywall -- not just what a fresh `home:` swap would
       // cover.
       builder: (context, child) {
-        if (isLocked) return const PaywallScreen();
-        return child ?? const SizedBox.shrink();
+        final content = isLocked ? const PaywallScreen() : (child ?? const SizedBox.shrink());
+        return Stack(
+          children: [
+            content,
+            // TEMPORARY: diagnostic banner for the iOS shared-storage
+            // channel. Remove once confirmed working.
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                child: Material(
+                  color: Colors.black87,
+                  child: Padding(
+                    padding: const EdgeInsets.all(6),
+                    child: Text(
+                      'DEBUG: ${SharedStorage.debugLastStatus}',
+                      style: const TextStyle(color: Colors.white, fontSize: 11),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
       },
       home:
           hasSeenWelcome ? const CategoryListScreen() : const WelcomeScreen(),

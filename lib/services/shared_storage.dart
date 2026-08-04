@@ -30,11 +30,21 @@ class SharedStorage {
     'com.apppostit.apppostit/shared_storage',
   );
 
+  /// TEMPORARY: last outcome of an iOS channel call, surfaced by a debug
+  /// banner in main.dart while diagnosing the iOS shared-storage channel.
+  /// Remove both once confirmed working.
+  static String debugLastStatus = 'no call yet';
+
   Future<bool?> getBool(String key) async {
     if (Platform.isIOS) {
       try {
-        return await _iosChannel.invokeMethod<bool>('getBool', {'key': key});
-      } on PlatformException {
+        final value = await _iosChannel.invokeMethod<bool>('getBool', {
+          'key': key,
+        });
+        debugLastStatus = 'getBool($key) -> $value';
+        return value;
+      } catch (e) {
+        debugLastStatus = 'getBool($key) THREW: $e';
         return null;
       }
     }
@@ -49,9 +59,8 @@ class SharedStorage {
           'key': key,
           'value': value,
         });
-      } on PlatformException {
-        // Nothing more to do -- the paywall/purchase-restore flow is the
-        // only caller and it has no separate UI feedback path to wire up.
+      } catch (e) {
+        debugLastStatus = 'setBool($key, $value) THREW: $e';
       }
       return;
     }
@@ -61,8 +70,13 @@ class SharedStorage {
   Future<int?> getInt(String key) async {
     if (Platform.isIOS) {
       try {
-        return await _iosChannel.invokeMethod<int>('getInt', {'key': key});
-      } on PlatformException {
+        final value = await _iosChannel.invokeMethod<int>('getInt', {
+          'key': key,
+        });
+        debugLastStatus = 'getInt($key) -> $value';
+        return value;
+      } catch (e) {
+        debugLastStatus = 'getInt($key) THREW: $e';
         return null;
       }
     }
