@@ -20,14 +20,15 @@ private let appGroupId = "group.com.apppostit.apppostit"
 final class AppGroupPlugin: NSObject {
     private let defaults = UserDefaults(suiteName: appGroupId)
 
-    // Takes the engine's own FlutterBinaryMessenger directly rather than
-    // going through FlutterPluginRegistry.registrar(forPlugin:).messenger()
-    // -- with FlutterImplicitEngineDelegate's didInitializeImplicitFlutterEngine,
-    // a per-plugin registrar's messenger doesn't connect to the same
-    // channel the Dart-side MethodChannel binds to, which silently breaks
-    // the channel (calls fail with MissingPluginException) even though
-    // registration appears to succeed. engineBridge.binaryMessenger is the
-    // one that actually works here.
+    // Takes a FlutterBinaryMessenger directly (pass
+    // engineBridge.applicationRegistrar.messenger() from
+    // AppDelegate.didInitializeImplicitFlutterEngine) rather than going
+    // through FlutterPluginRegistry.registrar(forPlugin:).messenger() --
+    // with this project's FlutterImplicitEngineDelegate-based setup, a
+    // per-plugin registrar's messenger didn't connect to the same channel
+    // the Dart-side MethodChannel binds to, silently breaking every call
+    // with MissingPluginException despite registration appearing to
+    // succeed.
     static func register(with messenger: FlutterBinaryMessenger) {
         let instance = AppGroupPlugin()
 
