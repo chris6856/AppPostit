@@ -62,6 +62,11 @@ class _AppPostItAppState extends ConsumerState<AppPostItApp>
     final storage = ref.read(sharedStorageProvider);
     final count = await storage.getInt(insertCountKey);
     final premium = await storage.getBool(kIsPremiumKey);
+    // TEMPORARY: round-trip self-test -- write a value then read it right
+    // back, to tell apart "can't persist to the shared suite at all" from
+    // "can't see the keyboard extension's specific writes."
+    await storage.setBool('_debug_roundtrip', true);
+    await storage.getBool('_debug_roundtrip');
     if (!mounted) return;
     ref.read(insertCountProvider.notifier).state = count ?? 0;
     ref.read(isPremiumProvider.notifier).state = premium ?? false;
