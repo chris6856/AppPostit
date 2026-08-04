@@ -11,7 +11,15 @@ class AppGroupPathChannel {
     'com.apppostit.apppostit/app_group',
   );
 
-  static Future<String?> getContainerPath() {
-    return _channel.invokeMethod<String>('getContainerPath');
+  /// TEMPORARY: last container path seen, surfaced by the debug banner in
+  /// main.dart -- compare directly against KeyboardViewController's own
+  /// logged container path to check for a signing/team mismatch between
+  /// the two targets. Remove once confirmed working.
+  static String? debugLastPath;
+
+  static Future<String?> getContainerPath() async {
+    final path = await _channel.invokeMethod<String>('getContainerPath');
+    debugLastPath = path;
+    return path;
   }
 }

@@ -27,6 +27,9 @@ final class KeyboardViewController: UIInputViewController {
     private let postScrollView = UIScrollView()
     private let postStack = UIStackView()
     private var nextKeyboardButton: UIButton!
+    // TEMPORARY: diagnostic label while chasing the iOS App Group data
+    // sharing issue -- remove once confirmed working.
+    private let debugLabel = UILabel()
 
     override func updateViewConstraints() {
         super.updateViewConstraints()
@@ -58,6 +61,12 @@ final class KeyboardViewController: UIInputViewController {
             root.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -8),
             view.heightAnchor.constraint(equalToConstant: 260),
         ])
+
+        // TEMPORARY: diagnostic label.
+        debugLabel.numberOfLines = 0
+        debugLabel.font = .systemFont(ofSize: 9)
+        debugLabel.textColor = .systemRed
+        root.addArrangedSubview(debugLabel)
 
         // Top bar: category chips + switch-keyboard button (required
         // whenever more than one keyboard is enabled).
@@ -111,6 +120,7 @@ final class KeyboardViewController: UIInputViewController {
     private func refresh() {
         chipStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
         postStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        updateDebugLabel()
 
         let isLocked = !purchaseStatusReader.isPremium() &&
             usageTracker.getInsertCount() >= freePostLimit
@@ -185,6 +195,26 @@ final class KeyboardViewController: UIInputViewController {
     @objc private func categoryTapped(_ sender: UIButton) {
         selectedCategoryId = Int64(sender.tag)
         refresh()
+    }
+
+    // TEMPORARY: shows what the keyboard sees in the shared App Group
+    // storage, including the "_debug_roundtrip" value the main app writes
+    // on every launch/resume -- if the keyboard can't see that either,
+    // the two targets aren't actually sharing the same container despite
+    // using the same App Group ID string (most likely a signing/team
+    // mismatch between the two targets).
+    private func updateDebugLabel() {
+        let appGroupId = "group.com.apppostit.apppostit"
+        let defaults = UserDefaults(suiteName: appGroupId)
+        let hasRoundtrip = defaults?.object(forKey: "_debug_roundtrip") != nil
+        let roundtripValue = defaults?.bool(forKey: "_debug_roundtrip") ?? false
+        let containerPath = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: appGroupId
+        )?.path ?? "NIL CONTAINER"
+        debugLabel.text = "KB DEBUG: count=\(usageTracker.getInsertCount()) " +
+            "premium=\(purchaseStatusReader.isPremium()) " +
+            "seesAppRoundtrip=\(hasRoundtrip ? "\(roundtripValue)" : "MISSING")\n" +
+            "container=\(containerPath)"
     }
 
     private func addEmptyMessage(to stack: UIStackView, text: String) {
