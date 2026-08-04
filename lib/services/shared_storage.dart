@@ -32,7 +32,11 @@ class SharedStorage {
 
   Future<bool?> getBool(String key) async {
     if (Platform.isIOS) {
-      return _iosChannel.invokeMethod<bool>('getBool', {'key': key});
+      try {
+        return await _iosChannel.invokeMethod<bool>('getBool', {'key': key});
+      } on PlatformException {
+        return null;
+      }
     }
     await _prefs.reload();
     return _prefs.getBool(key);
@@ -40,10 +44,15 @@ class SharedStorage {
 
   Future<void> setBool(String key, bool value) async {
     if (Platform.isIOS) {
-      await _iosChannel.invokeMethod<void>('setBool', {
-        'key': key,
-        'value': value,
-      });
+      try {
+        await _iosChannel.invokeMethod<void>('setBool', {
+          'key': key,
+          'value': value,
+        });
+      } on PlatformException {
+        // Nothing more to do -- the paywall/purchase-restore flow is the
+        // only caller and it has no separate UI feedback path to wire up.
+      }
       return;
     }
     await _prefs.setBool(key, value);
@@ -51,7 +60,11 @@ class SharedStorage {
 
   Future<int?> getInt(String key) async {
     if (Platform.isIOS) {
-      return _iosChannel.invokeMethod<int>('getInt', {'key': key});
+      try {
+        return await _iosChannel.invokeMethod<int>('getInt', {'key': key});
+      } on PlatformException {
+        return null;
+      }
     }
     await _prefs.reload();
     return _prefs.getInt(key);

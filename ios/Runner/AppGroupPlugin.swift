@@ -17,23 +17,31 @@ private let appGroupId = "group.com.apppostit.apppostit"
 ///     PurchaseStatusReader equivalents read/write, since the
 ///     shared_preferences plugin has no supported way to target an
 ///     App-Group-scoped UserDefaults suite on iOS.
-final class AppGroupPlugin: NSObject, FlutterPlugin {
+final class AppGroupPlugin: NSObject {
     private let defaults = UserDefaults(suiteName: appGroupId)
 
-    static func register(with registrar: FlutterPluginRegistrar) {
+    // Takes the engine's own FlutterBinaryMessenger directly rather than
+    // going through FlutterPluginRegistry.registrar(forPlugin:).messenger()
+    // -- with FlutterImplicitEngineDelegate's didInitializeImplicitFlutterEngine,
+    // a per-plugin registrar's messenger doesn't connect to the same
+    // channel the Dart-side MethodChannel binds to, which silently breaks
+    // the channel (calls fail with MissingPluginException) even though
+    // registration appears to succeed. engineBridge.binaryMessenger is the
+    // one that actually works here.
+    static func register(with messenger: FlutterBinaryMessenger) {
         let instance = AppGroupPlugin()
 
         let pathChannel = FlutterMethodChannel(
             name: "com.apppostit.apppostit/app_group",
-            binaryMessenger: registrar.messenger()
+            binaryMessenger: messenger
         )
-        registrar.addMethodCallDelegate(instance, channel: pathChannel)
+        pathChannel.setMethodCallHandler(instance.handle)
 
         let storageChannel = FlutterMethodChannel(
             name: "com.apppostit.apppostit/shared_storage",
-            binaryMessenger: registrar.messenger()
+            binaryMessenger: messenger
         )
-        registrar.addMethodCallDelegate(instance, channel: storageChannel)
+        storageChannel.setMethodCallHandler(instance.handle)
     }
 
     func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
