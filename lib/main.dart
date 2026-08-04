@@ -103,7 +103,7 @@ class _AppPostItAppState extends ConsumerState<AppPostItApp>
                   child: Padding(
                     padding: const EdgeInsets.all(6),
                     child: Text(
-                      'DEBUG: ${SharedStorage.debugLastStatus}',
+                      'DEBUG: ${SharedStorage.debugLog.entries.map((e) => '${e.key} ${e.value}').join(' | ')}',
                       style: const TextStyle(color: Colors.white, fontSize: 11),
                     ),
                   ),
