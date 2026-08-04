@@ -23,8 +23,13 @@ project = Xcodeproj::Project.open(PROJECT_PATH)
 runner_target = project.targets.find { |t| t.name == 'Runner' }
 raise "Runner target not found in #{PROJECT_PATH}" unless runner_target
 
-deployment_target = runner_target.build_configurations.first
-  .build_settings['IPHONEOS_DEPLOYMENT_TARGET']
+# Apple now requires a minimum of iOS 15 for new/updated App Store
+# submissions -- flutter create's default of 13.0 no longer passes review.
+MIN_IOS_VERSION = '15.0'
+runner_target.build_configurations.each do |config|
+  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = MIN_IOS_VERSION
+end
+deployment_target = MIN_IOS_VERSION
 
 # --- Runner: point it at its own entitlements file (App Group) ---------
 runner_target.build_configurations.each do |config|

@@ -26,10 +26,6 @@ class CategoryListScreen extends ConsumerWidget {
           opacity: 0.5,
           child: Image.asset('assets/icon/app_icon.png', fit: BoxFit.cover),
         ),
-        title: const Text(
-          'AppPostIt',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
         actions: [
           PopupMenuButton<String>(
             tooltip: 'User Management',
