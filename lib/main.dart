@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -61,7 +63,21 @@ class _AppPostItAppState extends ConsumerState<AppPostItApp>
 
   Future<void> _refreshFromStorage() async {
     final storage = ref.read(sharedStorageProvider);
-    final count = await storage.getInt(insertCountKey);
+
+    // A read immediately after launch/resume can race the App Group
+    // store's cross-process propagation of a very recent keyboard write
+    // -- confirmed by testing: the first read after opening the app came
+    // back null, but a later read (triggered by navigating elsewhere)
+    // correctly saw the value. Retry a few times with a short gap rather
+    // than trusting the first attempt.
+    int? count = await storage.getInt(insertCountKey);
+    if (Platform.isIOS) {
+      for (var attempt = 0; count == null && attempt < 4; attempt++) {
+        await Future.delayed(const Duration(milliseconds: 400));
+        count = await storage.getInt(insertCountKey);
+      }
+    }
+
     final premium = await storage.getBool(kIsPremiumKey);
     // TEMPORARY: round-trip self-test -- write a value then read it right
     // back, to tell apart "can't persist to the shared suite at all" from
