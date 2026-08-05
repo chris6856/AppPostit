@@ -18,7 +18,13 @@ private let appGroupId = "group.com.apppostit.apppostit"
 ///     shared_preferences plugin has no supported way to target an
 ///     App-Group-scoped UserDefaults suite on iOS.
 final class AppGroupPlugin: NSObject {
-    private let defaults = UserDefaults(suiteName: appGroupId)
+    // Computed, not stored: a fresh UserDefaults instance is created on
+    // every access instead of reusing one held for the plugin's whole
+    // lifetime. synchronize() (tried first) didn't fix stale reads of
+    // values the keyboard extension had just written -- it's a no-op on
+    // modern iOS. Recreating the instance is the workaround that actually
+    // forces Foundation to re-fetch from the shared store.
+    private var defaults: UserDefaults? { UserDefaults(suiteName: appGroupId) }
 
     // Takes a FlutterBinaryMessenger directly (pass
     // engineBridge.applicationRegistrar.messenger() from
@@ -58,14 +64,6 @@ final class AppGroupPlugin: NSObject {
                 result(FlutterError(code: "bad_args", message: "missing key", details: nil))
                 return
             }
-            // Force a fresh read from the shared store rather than trusting
-            // this long-lived instance's in-memory cache -- the value we
-            // want here is very often one the keyboard extension (a
-            // different process) just wrote. synchronize() is deprecated
-            // for general use since the system usually keeps this fresh
-            // automatically, but that "usually" isn't good enough right
-            // after a cross-process write.
-            defaults?.synchronize()
             if defaults?.object(forKey: key) == nil {
                 result(nil)
             } else {
@@ -87,7 +85,6 @@ final class AppGroupPlugin: NSObject {
                 result(FlutterError(code: "bad_args", message: "missing key", details: nil))
                 return
             }
-            defaults?.synchronize()
             if defaults?.object(forKey: key) == nil {
                 result(nil)
             } else {

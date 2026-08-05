@@ -10,16 +10,14 @@ private let isPremiumKey = "is_premium"
 /// reads/writes the same App Group UserDefaults suite the Flutter app's
 /// SharedStorage bridges into (AppGroupPlugin.swift).
 final class UsageTracker {
-    private let defaults = UserDefaults(suiteName: appGroupId)
+    // Computed, not stored -- see the matching comment in
+    // AppGroupPlugin.swift. A stored instance served stale reads of this
+    // exact key across the process boundary; recreating it on every
+    // access is what actually fixed it.
+    private var defaults: UserDefaults? { UserDefaults(suiteName: appGroupId) }
 
     func getInsertCount() -> Int {
-        // Forces a fresh read from the shared store rather than this
-        // instance's in-memory cache -- see the matching comment in
-        // AppGroupPlugin.swift, where a stale read of this exact key
-        // (written by this extension, read by the main app) was
-        // confirmed as a real bug.
-        defaults?.synchronize()
-        return defaults?.integer(forKey: insertCountKey) ?? 0
+        defaults?.integer(forKey: insertCountKey) ?? 0
     }
 
     func recordInsert() {
@@ -30,10 +28,9 @@ final class UsageTracker {
 /// Mirrors PurchaseStatusReader.kt on Android -- reads the "is_premium"
 /// flag the Flutter app writes after a successful purchase.
 final class PurchaseStatusReader {
-    private let defaults = UserDefaults(suiteName: appGroupId)
+    private var defaults: UserDefaults? { UserDefaults(suiteName: appGroupId) }
 
     func isPremium() -> Bool {
-        defaults?.synchronize()
-        return defaults?.bool(forKey: isPremiumKey) ?? false
+        defaults?.bool(forKey: isPremiumKey) ?? false
     }
 }
