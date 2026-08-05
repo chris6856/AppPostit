@@ -16,11 +16,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 ///
 /// iOS: the keyboard extension runs as a genuinely separate process with
 /// its own sandbox, so sharing requires an explicit App Group container.
-/// There's no well-documented way to point the shared_preferences plugin
-/// at an App-Group-scoped UserDefaults suite, so this goes through a
-/// small native channel (AppGroupPlugin.swift) that reads/writes
-/// `UserDefaults(suiteName: "group.com.apppostit.apppostit")` directly --
-/// the same suite the keyboard extension's Swift code reads/writes.
+/// This goes through a small native channel (AppGroupPlugin.swift) backed
+/// by a plain JSON file in that container (SharedState.swift) -- plugin
+/// registration issues and UserDefaults' cross-process caching behavior
+/// were both tried and ruled out as reliable options first.
 class SharedStorage {
   SharedStorage(this._prefs);
 
@@ -83,5 +82,19 @@ class SharedStorage {
     }
     await _prefs.reload();
     return _prefs.getInt(key);
+  }
+
+  /// TEMPORARY: fetches SharedState's last read/write outcome (including
+  /// any I/O error try? was previously swallowing) for the debug banner.
+  Future<String> debugNativeAction() async {
+    if (!Platform.isIOS) return 'n/a (not iOS)';
+    try {
+      final action = await _iosChannel.invokeMethod<String>(
+        'debugLastAction',
+      );
+      return action ?? 'null';
+    } catch (e) {
+      return 'debugLastAction THREW: $e';
+    }
   }
 }

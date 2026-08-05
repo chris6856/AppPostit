@@ -22,6 +22,12 @@ private let sharedStateFileName = "shared_state.json"
 /// duplicating the compiled file into both targets is simpler than
 /// factoring out a shared framework for it.
 enum SharedState {
+    /// TEMPORARY: last read/write outcome, surfaced by both the main
+    /// app's and the keyboard's debug labels. try? was silently
+    /// swallowing any I/O error, making a real failure indistinguishable
+    /// from "key not set yet" -- remove once confirmed working.
+    static var debugLastAction = "no action yet"
+
     private static var fileURL: URL? {
         FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: appGroupId)?
@@ -29,20 +35,36 @@ enum SharedState {
     }
 
     private static func read() -> [String: Any] {
-        guard let url = fileURL,
-              let data = try? Data(contentsOf: url),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-        else {
+        guard let url = fileURL else {
+            debugLastAction = "read: containerURL is NIL"
             return [:]
         }
-        return json
+        do {
+            let data = try Data(contentsOf: url)
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                debugLastAction = "read: parsed but not a dict"
+                return [:]
+            }
+            debugLastAction = "read ok: \(json)"
+            return json
+        } catch {
+            debugLastAction = "read THREW: \(error) at \(url.path)"
+            return [:]
+        }
     }
 
     private static func write(_ dict: [String: Any]) {
-        guard let url = fileURL,
-              let data = try? JSONSerialization.data(withJSONObject: dict)
-        else { return }
-        try? data.write(to: url, options: .atomic)
+        guard let url = fileURL else {
+            debugLastAction = "write: containerURL is NIL"
+            return
+        }
+        do {
+            let data = try JSONSerialization.data(withJSONObject: dict)
+            try data.write(to: url, options: .atomic)
+            debugLastAction = "write ok: \(dict) to \(url.path)"
+        } catch {
+            debugLastAction = "write THREW: \(error) at \(url.path)"
+        }
     }
 
     static func getInt(_ key: String) -> Int? {

@@ -73,6 +73,11 @@ final class AppGroupPlugin: NSObject {
             }
             result(SharedState.getInt(key))
 
+        // TEMPORARY: surfaces SharedState's last read/write outcome
+        // (including any I/O error) in the app's debug banner.
+        case "debugLastAction":
+            result(SharedState.debugLastAction)
+
         default:
             result(FlutterMethodNotImplemented)
         }

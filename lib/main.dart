@@ -32,6 +32,8 @@ class AppPostItApp extends ConsumerStatefulWidget {
 
 class _AppPostItAppState extends ConsumerState<AppPostItApp>
     with WidgetsBindingObserver {
+  String _lastNativeAction = 'no action yet'; // TEMPORARY debug field.
+
   @override
   void initState() {
     super.initState();
@@ -87,10 +89,11 @@ class _AppPostItAppState extends ConsumerState<AppPostItApp>
     await storage.setBool('_debug_roundtrip', true);
     await storage.getBool('_debug_roundtrip');
     await AppGroupPathChannel.getContainerPath();
+    final nativeAction = await storage.debugNativeAction();
     if (!mounted) return;
     ref.read(insertCountProvider.notifier).state = count ?? 0;
     ref.read(isPremiumProvider.notifier).state = premium ?? false;
-    setState(() {}); // Refresh the TEMPORARY debug banner below.
+    setState(() => _lastNativeAction = nativeAction); // Refresh the TEMPORARY debug banner.
   }
 
   @override
@@ -129,7 +132,8 @@ class _AppPostItAppState extends ConsumerState<AppPostItApp>
                     padding: const EdgeInsets.all(6),
                     child: Text(
                       'APP DEBUG: ${SharedStorage.debugLog.entries.map((e) => '${e.key} ${e.value}').join(' | ')}\n'
-                      'container=${AppGroupPathChannel.debugLastPath}',
+                      'container=${AppGroupPathChannel.debugLastPath}\n'
+                      'nativeAction=$_lastNativeAction',
                       style: const TextStyle(color: Colors.white, fontSize: 11),
                     ),
                   ),

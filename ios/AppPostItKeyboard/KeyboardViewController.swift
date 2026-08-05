@@ -187,6 +187,7 @@ final class KeyboardViewController: UIInputViewController {
     private func insertPost(_ post: PostRow) {
         textDocumentProxy.insertText(post.body)
         usageTracker.recordInsert()
+        updateDebugLabel() // reflect the write immediately, not just on refresh()
         if !purchaseStatusReader.isPremium() && usageTracker.getInsertCount() >= freePostLimit {
             refresh()
         }
@@ -207,7 +208,8 @@ final class KeyboardViewController: UIInputViewController {
         let roundtrip = SharedState.getBool("_debug_roundtrip")
         debugLabel.text = "KB DEBUG: count=\(usageTracker.getInsertCount()) " +
             "premium=\(purchaseStatusReader.isPremium()) " +
-            "seesAppRoundtrip=\(roundtrip.map { "\($0)" } ?? "MISSING")"
+            "seesAppRoundtrip=\(roundtrip.map { "\($0)" } ?? "MISSING")\n" +
+            "lastAction=\(SharedState.debugLastAction)"
     }
 
     private func addEmptyMessage(to stack: UIStackView, text: String) {
