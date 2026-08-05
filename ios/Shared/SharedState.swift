@@ -17,22 +17,17 @@ private let sharedStateFileName = "shared_state.json"
 /// boundary (see SqliteReader.swift / database.dart), so it's a known
 /// quantity rather than another guess.
 ///
+/// Writing to the App Group container from the keyboard extension
+/// requires "Allow Full Access" to be granted (RequestsOpenAccess in
+/// AppPostItKeyboard/Info.plist) -- reads work without it, but a write
+/// without it throws a permission error. KeyboardViewController checks
+/// hasFullAccess before relying on any of this.
+///
 /// Included in both the Runner and AppPostItKeyboard targets (see
 /// ios/scripts/add_keyboard_extension.rb) -- small enough that
 /// duplicating the compiled file into both targets is simpler than
 /// factoring out a shared framework for it.
 enum SharedState {
-    /// TEMPORARY: last read/write outcome, surfaced by both the main
-    /// app's and the keyboard's debug labels. try? was silently
-    /// swallowing any I/O error, making a real failure indistinguishable
-    /// from "key not set yet". Kept as two separate fields -- a shared
-    /// single field previously let a read (e.g. the debug label's own
-    /// lookup, which runs right after a write when refreshing) silently
-    /// clobber the write's result before it could ever be seen. Remove
-    /// all of this once confirmed working.
-    static var debugLastRead = "no read yet"
-    static var debugLastWrite = "no write yet"
-
     private static var fileURL: URL? {
         FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: appGroupId)?
@@ -40,36 +35,20 @@ enum SharedState {
     }
 
     private static func read() -> [String: Any] {
-        guard let url = fileURL else {
-            debugLastRead = "read: containerURL is NIL"
+        guard let url = fileURL,
+              let data = try? Data(contentsOf: url),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else {
             return [:]
         }
-        do {
-            let data = try Data(contentsOf: url)
-            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                debugLastRead = "read: parsed but not a dict"
-                return [:]
-            }
-            debugLastRead = "read ok: \(json)"
-            return json
-        } catch {
-            debugLastRead = "read THREW: \(error) at \(url.path)"
-            return [:]
-        }
+        return json
     }
 
     private static func write(_ dict: [String: Any]) {
-        guard let url = fileURL else {
-            debugLastWrite = "write: containerURL is NIL"
-            return
-        }
-        do {
-            let data = try JSONSerialization.data(withJSONObject: dict)
-            try data.write(to: url, options: .atomic)
-            debugLastWrite = "write ok: \(dict) to \(url.path)"
-        } catch {
-            debugLastWrite = "write THREW: \(error) at \(url.path)"
-        }
+        guard let url = fileURL,
+              let data = try? JSONSerialization.data(withJSONObject: dict)
+        else { return }
+        try? data.write(to: url, options: .atomic)
     }
 
     static func getInt(_ key: String) -> Int? {

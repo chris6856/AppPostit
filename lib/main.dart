@@ -30,8 +30,6 @@ class AppPostItApp extends ConsumerStatefulWidget {
 
 class _AppPostItAppState extends ConsumerState<AppPostItApp>
     with WidgetsBindingObserver {
-  String _lastNativeAction = 'no action yet'; // TEMPORARY debug field.
-
   @override
   void initState() {
     super.initState();
@@ -65,11 +63,11 @@ class _AppPostItAppState extends ConsumerState<AppPostItApp>
     final storage = ref.read(sharedStorageProvider);
 
     // A read immediately after launch/resume can race the App Group
-    // store's cross-process propagation of a very recent keyboard write
-    // -- confirmed by testing: the first read after opening the app came
-    // back null, but a later read (triggered by navigating elsewhere)
-    // correctly saw the value. Retry a few times with a short gap rather
-    // than trusting the first attempt.
+    // store's cross-process propagation of a very recent keyboard write --
+    // confirmed by testing: the first read after opening the app came back
+    // null, but a later read (triggered by navigating elsewhere) correctly
+    // saw the value. Retry a few times with a short gap rather than
+    // trusting the first attempt.
     int? count = await storage.getInt(insertCountKey);
     if (Platform.isIOS) {
       for (var attempt = 0; count == null && attempt < 4; attempt++) {
@@ -79,11 +77,9 @@ class _AppPostItAppState extends ConsumerState<AppPostItApp>
     }
 
     final premium = await storage.getBool(kIsPremiumKey);
-    final nativeAction = await storage.debugNativeAction();
     if (!mounted) return;
     ref.read(insertCountProvider.notifier).state = count ?? 0;
     ref.read(isPremiumProvider.notifier).state = premium ?? false;
-    setState(() => _lastNativeAction = nativeAction); // Refresh the TEMPORARY debug banner.
   }
 
   @override
@@ -105,34 +101,8 @@ class _AppPostItAppState extends ConsumerState<AppPostItApp>
       // screen with the paywall -- not just what a fresh `home:` swap would
       // cover.
       builder: (context, child) {
-        final content = isLocked ? const PaywallScreen() : (child ?? const SizedBox.shrink());
-        return Stack(
-          children: [
-            content,
-            // TEMPORARY: single-line diagnostic banner, bottom of screen
-            // so it doesn't cover the app bar or FAB. Remove once
-            // confirmed working.
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: SafeArea(
-                child: Material(
-                  color: Colors.black87,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                    child: Text(
-                      _lastNativeAction,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white, fontSize: 10),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        );
+        if (isLocked) return const PaywallScreen();
+        return child ?? const SizedBox.shrink();
       },
       home:
           hasSeenWelcome ? const CategoryListScreen() : const WelcomeScreen(),

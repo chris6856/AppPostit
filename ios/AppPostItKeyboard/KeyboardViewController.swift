@@ -10,10 +10,11 @@ private let freePostLimit = 8
 /// Mirrors AppPostItInputMethodService.kt's structure: a horizontal row of
 /// category chips above a scrollable list of that category's posts,
 /// tapping a post inserts its body at the cursor. Reading the shared
-/// SQLite file and the UserDefaults App Group suite doesn't require
-/// "Allow Full Access" -- Apple carves out App Groups specifically as the
-/// sanctioned keyboard-to-container-app data channel that works without
-/// it, unlike network access.
+/// SQLite file and SharedState.swift's JSON file works without "Allow
+/// Full Access", but *writing* to either does not -- confirmed by
+/// testing, a write without it throws a permission error. Since tracking
+/// the free-tier insert count requires writing, the whole UI here is
+/// gated on hasFullAccess (see refresh()).
 final class KeyboardViewController: UIInputViewController {
     private let reader = SqliteReader()
     private let usageTracker = UsageTracker()
@@ -27,9 +28,6 @@ final class KeyboardViewController: UIInputViewController {
     private let postScrollView = UIScrollView()
     private let postStack = UIStackView()
     private var nextKeyboardButton: UIButton!
-    // TEMPORARY: diagnostic label while chasing the iOS App Group data
-    // sharing issue -- remove once confirmed working.
-    private let debugLabel = UILabel()
 
     override func updateViewConstraints() {
         super.updateViewConstraints()
@@ -61,12 +59,6 @@ final class KeyboardViewController: UIInputViewController {
             root.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -8),
             view.heightAnchor.constraint(equalToConstant: 260),
         ])
-
-        // TEMPORARY: diagnostic label.
-        debugLabel.numberOfLines = 0
-        debugLabel.font = .systemFont(ofSize: 9)
-        debugLabel.textColor = .systemRed
-        root.addArrangedSubview(debugLabel)
 
         // Top bar: category chips + switch-keyboard button (required
         // whenever more than one keyboard is enabled).
@@ -120,7 +112,6 @@ final class KeyboardViewController: UIInputViewController {
     private func refresh() {
         chipStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
         postStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        updateDebugLabel()
 
         // Writing to the App Group container (tracking insert count, so
         // the free-tier limit can be enforced) requires Full Access --
@@ -201,7 +192,6 @@ final class KeyboardViewController: UIInputViewController {
     private func insertPost(_ post: PostRow) {
         textDocumentProxy.insertText(post.body)
         usageTracker.recordInsert()
-        updateDebugLabel() // reflect the write immediately, not just on refresh()
         if !purchaseStatusReader.isPremium() && usageTracker.getInsertCount() >= freePostLimit {
             refresh()
         }
@@ -210,16 +200,6 @@ final class KeyboardViewController: UIInputViewController {
     @objc private func categoryTapped(_ sender: UIButton) {
         selectedCategoryId = Int64(sender.tag)
         refresh()
-    }
-
-    // TEMPORARY: shows what the keyboard sees in the shared App Group
-    // storage, including the "_debug_roundtrip" value the main app writes
-    // on every launch/resume -- if the keyboard can't see that either,
-    // the two targets aren't actually sharing the same container despite
-    // using the same App Group ID string (most likely a signing/team
-    // mismatch between the two targets).
-    private func updateDebugLabel() {
-        debugLabel.text = SharedState.debugLastWrite
     }
 
     private func addEmptyMessage(to stack: UIStackView, text: String) {

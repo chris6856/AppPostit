@@ -29,21 +29,11 @@ class SharedStorage {
     'com.apppostit.apppostit/shared_storage',
   );
 
-  /// TEMPORARY: per-key outcome of the most recent iOS channel calls,
-  /// surfaced by a debug banner in main.dart while diagnosing the iOS
-  /// shared-storage channel. Remove both once confirmed working.
-  static final Map<String, String> debugLog = {};
-
   Future<bool?> getBool(String key) async {
     if (Platform.isIOS) {
       try {
-        final value = await _iosChannel.invokeMethod<bool>('getBool', {
-          'key': key,
-        });
-        debugLog['getBool($key)'] = '-> $value';
-        return value;
-      } catch (e) {
-        debugLog['getBool($key)'] = 'THREW: $e';
+        return await _iosChannel.invokeMethod<bool>('getBool', {'key': key});
+      } catch (_) {
         return null;
       }
     }
@@ -58,9 +48,9 @@ class SharedStorage {
           'key': key,
           'value': value,
         });
-        debugLog['setBool($key)'] = '-> ok';
-      } catch (e) {
-        debugLog['setBool($key)'] = 'THREW: $e';
+      } catch (_) {
+        // Nothing more to do -- the paywall/purchase-restore flow is the
+        // only caller and it has no separate UI feedback path to wire up.
       }
       return;
     }
@@ -70,31 +60,12 @@ class SharedStorage {
   Future<int?> getInt(String key) async {
     if (Platform.isIOS) {
       try {
-        final value = await _iosChannel.invokeMethod<int>('getInt', {
-          'key': key,
-        });
-        debugLog['getInt($key)'] = '-> $value';
-        return value;
-      } catch (e) {
-        debugLog['getInt($key)'] = 'THREW: $e';
+        return await _iosChannel.invokeMethod<int>('getInt', {'key': key});
+      } catch (_) {
         return null;
       }
     }
     await _prefs.reload();
     return _prefs.getInt(key);
-  }
-
-  /// TEMPORARY: fetches SharedState's last read/write outcome (including
-  /// any I/O error try? was previously swallowing) for the debug banner.
-  Future<String> debugNativeAction() async {
-    if (!Platform.isIOS) return 'n/a (not iOS)';
-    try {
-      final action = await _iosChannel.invokeMethod<String>(
-        'debugLastAction',
-      );
-      return action ?? 'null';
-    } catch (e) {
-      return 'debugLastAction THREW: $e';
-    }
   }
 }
