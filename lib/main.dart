@@ -4,13 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'platform/app_group_path_channel.dart';
 import 'providers/providers.dart';
 import 'screens/category_list_screen.dart';
 import 'screens/paywall_screen.dart';
 import 'screens/welcome_screen.dart';
 import 'services/purchase_service.dart' show kIsPremiumKey;
-import 'services/shared_storage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -81,14 +79,6 @@ class _AppPostItAppState extends ConsumerState<AppPostItApp>
     }
 
     final premium = await storage.getBool(kIsPremiumKey);
-    // TEMPORARY: round-trip self-test -- write a value then read it right
-    // back, to tell apart "can't persist to the shared suite at all" from
-    // "can't see the keyboard extension's specific writes." Also refetch
-    // the container path so its exact string can be compared against
-    // KeyboardViewController's own logged container path.
-    await storage.setBool('_debug_roundtrip', true);
-    await storage.getBool('_debug_roundtrip');
-    await AppGroupPathChannel.getContainerPath();
     final nativeAction = await storage.debugNativeAction();
     if (!mounted) return;
     ref.read(insertCountProvider.notifier).state = count ?? 0;
@@ -119,22 +109,23 @@ class _AppPostItAppState extends ConsumerState<AppPostItApp>
         return Stack(
           children: [
             content,
-            // TEMPORARY: diagnostic banner for the iOS shared-storage
-            // channel. Remove once confirmed working.
+            // TEMPORARY: single-line diagnostic banner, bottom of screen
+            // so it doesn't cover the app bar or FAB. Remove once
+            // confirmed working.
             Positioned(
-              top: 0,
+              bottom: 0,
               left: 0,
               right: 0,
               child: SafeArea(
                 child: Material(
                   color: Colors.black87,
                   child: Padding(
-                    padding: const EdgeInsets.all(6),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                     child: Text(
-                      'APP DEBUG: ${SharedStorage.debugLog.entries.map((e) => '${e.key} ${e.value}').join(' | ')}\n'
-                      'container=${AppGroupPathChannel.debugLastPath}\n'
-                      'nativeAction=$_lastNativeAction',
-                      style: const TextStyle(color: Colors.white, fontSize: 11),
+                      _lastNativeAction,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white, fontSize: 10),
                     ),
                   ),
                 ),
