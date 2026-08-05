@@ -18,12 +18,12 @@ private let appGroupId = "group.com.apppostit.apppostit"
 ///     shared_preferences plugin has no supported way to target an
 ///     App-Group-scoped UserDefaults suite on iOS.
 final class AppGroupPlugin: NSObject {
-    // Computed, not stored: a fresh UserDefaults instance is created on
-    // every access instead of reusing one held for the plugin's whole
-    // lifetime. synchronize() (tried first) didn't fix stale reads of
-    // values the keyboard extension had just written -- it's a no-op on
-    // modern iOS. Recreating the instance is the workaround that actually
-    // forces Foundation to re-fetch from the shared store.
+    // Computed, not stored, so a fresh UserDefaults instance backs every
+    // access rather than one held for the plugin's whole lifetime -- cheap
+    // insurance against stale in-memory state, though it turned out the
+    // real bug was on the write side: see UsageTracker.recordInsert()'s
+    // comment for why the keyboard extension specifically needs an
+    // explicit synchronize() after writing.
     private var defaults: UserDefaults? { UserDefaults(suiteName: appGroupId) }
 
     // Takes a FlutterBinaryMessenger directly (pass
