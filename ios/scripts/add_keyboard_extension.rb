@@ -52,6 +52,20 @@ unless runner_group['AppGroupPlugin.swift']
   runner_target.source_build_phase.add_file_reference(file_ref)
 end
 
+# --- SharedState.swift: compiled into BOTH targets -----------------------
+# Small enough that duplicating the one file into both targets' compile
+# sources is simpler than factoring out a shared framework -- Xcode
+# supports the same file reference being a build file in multiple
+# targets, which is exactly this case.
+shared_dir = File.expand_path('../Shared', __dir__)
+shared_group = project.main_group['Shared'] || project.main_group.new_group('Shared', shared_dir)
+shared_state_ref = shared_group['SharedState.swift'] ||
+  shared_group.new_reference(File.join(shared_dir, 'SharedState.swift'))
+
+unless runner_target.source_build_phase.files.any? { |f| f.file_ref == shared_state_ref }
+  runner_target.source_build_phase.add_file_reference(shared_state_ref)
+end
+
 # --- Keyboard extension target: create if missing -----------------------
 keyboard_target = project.targets.find { |t| t.name == EXTENSION_NAME }
 
@@ -96,6 +110,10 @@ if keyboard_target.nil?
   )
   sqlite_ref.source_tree = 'SDKROOT'
   keyboard_target.frameworks_build_phase.add_file_reference(sqlite_ref)
+end
+
+unless keyboard_target.source_build_phase.files.any? { |f| f.file_ref == shared_state_ref }
+  keyboard_target.source_build_phase.add_file_reference(shared_state_ref)
 end
 
 # --- Source files: sync every time in case files were added -------------

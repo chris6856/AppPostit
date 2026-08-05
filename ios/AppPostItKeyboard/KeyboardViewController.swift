@@ -204,17 +204,10 @@ final class KeyboardViewController: UIInputViewController {
     // using the same App Group ID string (most likely a signing/team
     // mismatch between the two targets).
     private func updateDebugLabel() {
-        let appGroupId = "group.com.apppostit.apppostit"
-        let defaults = UserDefaults(suiteName: appGroupId)
-        let hasRoundtrip = defaults?.object(forKey: "_debug_roundtrip") != nil
-        let roundtripValue = defaults?.bool(forKey: "_debug_roundtrip") ?? false
-        let containerPath = FileManager.default.containerURL(
-            forSecurityApplicationGroupIdentifier: appGroupId
-        )?.path ?? "NIL CONTAINER"
+        let roundtrip = SharedState.getBool("_debug_roundtrip")
         debugLabel.text = "KB DEBUG: count=\(usageTracker.getInsertCount()) " +
             "premium=\(purchaseStatusReader.isPremium()) " +
-            "seesAppRoundtrip=\(hasRoundtrip ? "\(roundtripValue)" : "MISSING")\n" +
-            "container=\(containerPath)"
+            "seesAppRoundtrip=\(roundtrip.map { "\($0)" } ?? "MISSING")"
     }
 
     private func addEmptyMessage(to stack: UIStackView, text: String) {

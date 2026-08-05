@@ -12,20 +12,10 @@ private let appGroupId = "group.com.apppostit.apppostit"
 ///     open the sqlite file inside the shared App Group container instead
 ///     of this app's own (extension-invisible) documents directory.
 ///   - "com.apppostit.apppostit/shared_storage": getBool/setBool/getInt,
-///     reading and writing UserDefaults(suiteName: appGroupId) directly --
-///     the same suite KeyboardViewController.swift's UsageTracker and
-///     PurchaseStatusReader equivalents read/write, since the
-///     shared_preferences plugin has no supported way to target an
-///     App-Group-scoped UserDefaults suite on iOS.
+///     backed by SharedState.swift (a plain JSON file in the App Group
+///     container) rather than UserDefaults -- see that file's comment for
+///     why.
 final class AppGroupPlugin: NSObject {
-    // Computed, not stored, so a fresh UserDefaults instance backs every
-    // access rather than one held for the plugin's whole lifetime -- cheap
-    // insurance against stale in-memory state, though it turned out the
-    // real bug was on the write side: see UsageTracker.recordInsert()'s
-    // comment for why the keyboard extension specifically needs an
-    // explicit synchronize() after writing.
-    private var defaults: UserDefaults? { UserDefaults(suiteName: appGroupId) }
-
     // Takes a FlutterBinaryMessenger directly (pass
     // engineBridge.applicationRegistrar.messenger() from
     // AppDelegate.didInitializeImplicitFlutterEngine) rather than going
@@ -64,11 +54,7 @@ final class AppGroupPlugin: NSObject {
                 result(FlutterError(code: "bad_args", message: "missing key", details: nil))
                 return
             }
-            if defaults?.object(forKey: key) == nil {
-                result(nil)
-            } else {
-                result(defaults?.bool(forKey: key) ?? false)
-            }
+            result(SharedState.getBool(key))
 
         case "setBool":
             guard let args = call.arguments as? [String: Any],
@@ -77,7 +63,7 @@ final class AppGroupPlugin: NSObject {
                 result(FlutterError(code: "bad_args", message: "missing key/value", details: nil))
                 return
             }
-            defaults?.set(value, forKey: key)
+            SharedState.setBool(key, value)
             result(nil)
 
         case "getInt":
@@ -85,11 +71,7 @@ final class AppGroupPlugin: NSObject {
                 result(FlutterError(code: "bad_args", message: "missing key", details: nil))
                 return
             }
-            if defaults?.object(forKey: key) == nil {
-                result(nil)
-            } else {
-                result(defaults?.integer(forKey: key) ?? 0)
-            }
+            result(SharedState.getInt(key))
 
         default:
             result(FlutterMethodNotImplemented)
