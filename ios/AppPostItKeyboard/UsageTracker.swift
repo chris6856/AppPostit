@@ -13,7 +13,13 @@ final class UsageTracker {
     private let defaults = UserDefaults(suiteName: appGroupId)
 
     func getInsertCount() -> Int {
-        defaults?.integer(forKey: insertCountKey) ?? 0
+        // Forces a fresh read from the shared store rather than this
+        // instance's in-memory cache -- see the matching comment in
+        // AppGroupPlugin.swift, where a stale read of this exact key
+        // (written by this extension, read by the main app) was
+        // confirmed as a real bug.
+        defaults?.synchronize()
+        return defaults?.integer(forKey: insertCountKey) ?? 0
     }
 
     func recordInsert() {
@@ -27,6 +33,7 @@ final class PurchaseStatusReader {
     private let defaults = UserDefaults(suiteName: appGroupId)
 
     func isPremium() -> Bool {
-        defaults?.bool(forKey: isPremiumKey) ?? false
+        defaults?.synchronize()
+        return defaults?.bool(forKey: isPremiumKey) ?? false
     }
 }

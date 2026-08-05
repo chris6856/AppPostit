@@ -58,6 +58,14 @@ final class AppGroupPlugin: NSObject {
                 result(FlutterError(code: "bad_args", message: "missing key", details: nil))
                 return
             }
+            // Force a fresh read from the shared store rather than trusting
+            // this long-lived instance's in-memory cache -- the value we
+            // want here is very often one the keyboard extension (a
+            // different process) just wrote. synchronize() is deprecated
+            // for general use since the system usually keeps this fresh
+            // automatically, but that "usually" isn't good enough right
+            // after a cross-process write.
+            defaults?.synchronize()
             if defaults?.object(forKey: key) == nil {
                 result(nil)
             } else {
@@ -79,6 +87,7 @@ final class AppGroupPlugin: NSObject {
                 result(FlutterError(code: "bad_args", message: "missing key", details: nil))
                 return
             }
+            defaults?.synchronize()
             if defaults?.object(forKey: key) == nil {
                 result(nil)
             } else {
