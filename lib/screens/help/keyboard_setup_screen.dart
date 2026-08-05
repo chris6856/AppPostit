@@ -21,15 +21,43 @@ class KeyboardSetupScreen extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyLarge,
           ),
           const SizedBox(height: 20),
-          if (isIOS)
+          if (isIOS) ...[
             const StepTile(
               number: 1,
-              title: 'Coming soon',
-              description: 'The AppPostIt keyboard for iOS is still in '
-                  'development. For now, you can browse and manage your '
-                  'saved posts here in the app.',
-            )
-          else ...[
+              title: 'Open Settings > General > Keyboard > Keyboards',
+              description: 'Then tap "Add New Keyboard...".',
+            ),
+            const StepTile(
+              number: 2,
+              title: 'Select "AppPostIt Keyboard"',
+              description: 'Listed under "Third-Party Keyboards".',
+            ),
+            const StepTile(
+              number: 3,
+              title: 'Tap it again and turn on "Allow Full Access"',
+              description: 'Required so the keyboard can track your free '
+                  'post limit and read your saved posts -- AppPostIt '
+                  "doesn't use this for anything else.",
+            ),
+            const StepTile(
+              number: 4,
+              title: 'Open any text field',
+              description: 'Tap into a message, comment, or search box '
+                  'to bring up your regular keyboard.',
+            ),
+            const StepTile(
+              number: 5,
+              title: 'Switch to AppPostIt',
+              description: 'Tap and hold the globe icon in the bottom-left '
+                  'of the keyboard and choose "AppPostIt Keyboard".',
+            ),
+            const StepTile(
+              number: 6,
+              title: 'Tap a category, then a post',
+              description: "Its text is inserted right into the field "
+                  "you're typing in.",
+            ),
+          ] else ...[
             const StepTile(
               number: 1,
               title: 'Open Settings and search "keyboard"',

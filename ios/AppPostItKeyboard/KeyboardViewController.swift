@@ -122,6 +122,20 @@ final class KeyboardViewController: UIInputViewController {
         postStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
         updateDebugLabel()
 
+        // Writing to the App Group container (tracking insert count, so
+        // the free-tier limit can be enforced) requires Full Access --
+        // confirmed by testing: reads succeeded without it, but every
+        // write threw "Operation not permitted". Without it, the free
+        // count could never be tracked at all.
+        if !hasFullAccess {
+            addEmptyMessage(
+                to: postStack,
+                text: "Enable \"Allow Full Access\" for AppPostIt Keyboard in Settings > " +
+                    "General > Keyboard > Keyboards to use your saved posts here."
+            )
+            return
+        }
+
         let isLocked = !purchaseStatusReader.isPremium() &&
             usageTracker.getInsertCount() >= freePostLimit
         if isLocked {
