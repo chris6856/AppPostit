@@ -25,8 +25,13 @@ enum SharedState {
     /// TEMPORARY: last read/write outcome, surfaced by both the main
     /// app's and the keyboard's debug labels. try? was silently
     /// swallowing any I/O error, making a real failure indistinguishable
-    /// from "key not set yet" -- remove once confirmed working.
-    static var debugLastAction = "no action yet"
+    /// from "key not set yet". Kept as two separate fields -- a shared
+    /// single field previously let a read (e.g. the debug label's own
+    /// lookup, which runs right after a write when refreshing) silently
+    /// clobber the write's result before it could ever be seen. Remove
+    /// all of this once confirmed working.
+    static var debugLastRead = "no read yet"
+    static var debugLastWrite = "no write yet"
 
     private static var fileURL: URL? {
         FileManager.default
@@ -36,34 +41,34 @@ enum SharedState {
 
     private static func read() -> [String: Any] {
         guard let url = fileURL else {
-            debugLastAction = "read: containerURL is NIL"
+            debugLastRead = "read: containerURL is NIL"
             return [:]
         }
         do {
             let data = try Data(contentsOf: url)
             guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-                debugLastAction = "read: parsed but not a dict"
+                debugLastRead = "read: parsed but not a dict"
                 return [:]
             }
-            debugLastAction = "read ok: \(json)"
+            debugLastRead = "read ok: \(json)"
             return json
         } catch {
-            debugLastAction = "read THREW: \(error) at \(url.path)"
+            debugLastRead = "read THREW: \(error) at \(url.path)"
             return [:]
         }
     }
 
     private static func write(_ dict: [String: Any]) {
         guard let url = fileURL else {
-            debugLastAction = "write: containerURL is NIL"
+            debugLastWrite = "write: containerURL is NIL"
             return
         }
         do {
             let data = try JSONSerialization.data(withJSONObject: dict)
             try data.write(to: url, options: .atomic)
-            debugLastAction = "write ok: \(dict) to \(url.path)"
+            debugLastWrite = "write ok: \(dict) to \(url.path)"
         } catch {
-            debugLastAction = "write THREW: \(error) at \(url.path)"
+            debugLastWrite = "write THREW: \(error) at \(url.path)"
         }
     }
 

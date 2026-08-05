@@ -209,7 +209,8 @@ final class KeyboardViewController: UIInputViewController {
         debugLabel.text = "KB DEBUG: count=\(usageTracker.getInsertCount()) " +
             "premium=\(purchaseStatusReader.isPremium()) " +
             "seesAppRoundtrip=\(roundtrip.map { "\($0)" } ?? "MISSING")\n" +
-            "lastAction=\(SharedState.debugLastAction)"
+            "lastWrite=\(SharedState.debugLastWrite)\n" +
+            "lastRead=\(SharedState.debugLastRead)"
     }
 
     private func addEmptyMessage(to stack: UIStackView, text: String) {
