@@ -23,7 +23,7 @@ void main() {
     // Inserts are only ever recorded by the keyboard's native UsageTracker,
     // never by the Dart side -- simulate that by seeding the pref directly.
     SharedPreferences.setMockInitialValues({
-      insertCountKey: kFreePostLimit,
+      insertCountKey: kFreeInsertLimit,
     });
     final prefs = await SharedPreferences.getInstance();
 
@@ -40,7 +40,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text("You've used your $kFreePostLimit free posts!"),
+      find.text("You've used your $kFreeInsertLimit free inserts!"),
       findsOneWidget,
     );
     expect(find.text('Allergies'), findsNothing);
@@ -58,7 +58,7 @@ void main() {
     await CategoryRepository(db).create('Allergies');
 
     SharedPreferences.setMockInitialValues({
-      insertCountKey: kFreePostLimit + 5,
+      insertCountKey: kFreeInsertLimit + 5,
       'is_premium': true,
     });
     final prefs = await SharedPreferences.getInstance();
@@ -76,7 +76,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text("You've used your $kFreePostLimit free posts!"),
+      find.text("You've used your $kFreeInsertLimit free inserts!"),
       findsNothing,
     );
     expect(find.text('Allergies'), findsOneWidget);

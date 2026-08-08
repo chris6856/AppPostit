@@ -2,11 +2,12 @@ package com.apppostit.apppostit.ime
 
 import android.content.Context
 
-/** Posts beyond this many (across all categories) require the unlock
- *  purchase. Keep in sync with the Flutter side's copy of this limit
- *  (lib/providers/providers.dart's kFreePostLimit), since both enforce
- *  the same gate independently against the same database. */
-const val FREE_POST_LIMIT = 8
+/** Insertions beyond this many (a saved post actually typed into another
+ *  app via the keyboard -- not how many posts are saved) require the
+ *  unlock purchase. Keep in sync with the Flutter side's copy of this
+ *  limit (lib/providers/providers.dart's kFreeInsertLimit), since both
+ *  enforce the same gate independently. */
+const val FREE_INSERT_LIMIT = 8
 
 /**
  * Reads the "is_premium" flag the Flutter app writes via shared_preferences.

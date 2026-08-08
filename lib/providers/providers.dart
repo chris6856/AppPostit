@@ -11,12 +11,12 @@ import '../services/shared_storage.dart';
 const hasSeenWelcomeKey = 'has_seen_welcome';
 
 /// Insertions beyond this many (a saved post actually typed into another
-/// app via the keyboard) require the unlock purchase. Keep in sync with
-/// the Android keyboard's own copy of this limit
-/// (android/.../ime/AppPostItInputMethodService.kt), since the keyboard
-/// enforces the same gate natively -- it's also the only place that
-/// increments the counter, via UsageTracker.kt.
-const int kFreePostLimit = 8;
+/// app via the keyboard -- not how many posts are saved) require the
+/// unlock purchase. Keep in sync with the Android keyboard's own copy of
+/// this limit (android/.../ime/AppPostItInputMethodService.kt), since the
+/// keyboard enforces the same gate natively -- it's also the only place
+/// that increments the counter, via UsageTracker.kt.
+const int kFreeInsertLimit = 8;
 
 const String insertCountKey = 'insert_count';
 
@@ -100,5 +100,5 @@ final purchaseInitProvider = FutureProvider<void>((ref) async {
 final isLockedProvider = Provider<bool>((ref) {
   if (ref.watch(isPremiumProvider)) return false;
   final count = ref.watch(insertCountProvider);
-  return count >= kFreePostLimit;
+  return count >= kFreeInsertLimit;
 });

@@ -1,11 +1,11 @@
 import UIKit
 
 /// Free-tier limit -- keep in sync with the Android keyboard's copy
-/// (android/.../ime/AppPostItInputMethodService.kt: FREE_POST_LIMIT) and
-/// the Dart side's kFreePostLimit (lib/providers/providers.dart). Each
+/// (android/.../ime/AppPostItInputMethodService.kt: FREE_INSERT_LIMIT) and
+/// the Dart side's kFreeInsertLimit (lib/providers/providers.dart). Each
 /// platform enforces the same gate independently against the same App
 /// Group data.
-private let freePostLimit = 8
+private let freeInsertLimit = 8
 
 /// Mirrors AppPostItInputMethodService.kt's structure: a horizontal row of
 /// category chips above a scrollable list of that category's posts,
@@ -128,11 +128,11 @@ final class KeyboardViewController: UIInputViewController {
         }
 
         let isLocked = !purchaseStatusReader.isPremium() &&
-            usageTracker.getInsertCount() >= freePostLimit
+            usageTracker.getInsertCount() >= freeInsertLimit
         if isLocked {
             addEmptyMessage(
                 to: postStack,
-                text: "You've used your \(freePostLimit) free posts. Open AppPostIt to " +
+                text: "You've used your \(freeInsertLimit) free inserts. Open AppPostIt to " +
                     "unlock unlimited posting."
             )
             return
@@ -192,7 +192,7 @@ final class KeyboardViewController: UIInputViewController {
     private func insertPost(_ post: PostRow) {
         textDocumentProxy.insertText(post.body)
         usageTracker.recordInsert()
-        if !purchaseStatusReader.isPremium() && usageTracker.getInsertCount() >= freePostLimit {
+        if !purchaseStatusReader.isPremium() && usageTracker.getInsertCount() >= freeInsertLimit {
             refresh()
         }
     }

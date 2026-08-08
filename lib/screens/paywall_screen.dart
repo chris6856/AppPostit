@@ -67,7 +67,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "You've used your $kFreePostLimit free posts!",
+                            "You've used your $kFreeInsertLimit free inserts!",
                             style: Theme.of(context)
                                 .textTheme
                                 .headlineSmall

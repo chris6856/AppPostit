@@ -49,11 +49,11 @@ class AppPostItInputMethodService : InputMethodService() {
         postList.removeAllViews()
 
         val isLocked = !purchaseStatusReader.isPremium() &&
-            usageTracker.getInsertCount() >= FREE_POST_LIMIT
+            usageTracker.getInsertCount() >= FREE_INSERT_LIMIT
         if (isLocked) {
             addEmptyMessage(
                 postList,
-                "You've used your $FREE_POST_LIMIT free posts. Open AppPostIt " +
+                "You've used your $FREE_INSERT_LIMIT free inserts. Open AppPostIt " +
                     "to unlock unlimited posting.",
             )
             return
@@ -114,7 +114,7 @@ class AppPostItInputMethodService : InputMethodService() {
                 currentInputConnection?.commitText(post.body, 1)
                 usageTracker.recordInsert()
                 if (!purchaseStatusReader.isPremium() &&
-                    usageTracker.getInsertCount() >= FREE_POST_LIMIT
+                    usageTracker.getInsertCount() >= FREE_INSERT_LIMIT
                 ) {
                     refreshCategories()
                 }

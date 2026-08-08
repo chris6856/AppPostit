@@ -34,7 +34,7 @@ const List<({String question, String answer})> _faqs = [
     answer: 'Yes -- both the app and the AppPostIt keyboard work on iOS. '
         'On iOS, the keyboard needs "Allow Full Access" turned on '
         '(Settings > General > Keyboard > Keyboards > AppPostIt Keyboard) '
-        'to track your free post limit and read your saved posts.',
+        'to track your free insert limit and read your saved posts.',
   ),
 ];
 
