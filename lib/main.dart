@@ -86,6 +86,7 @@ class _AppPostItAppState extends ConsumerState<AppPostItApp>
   Widget build(BuildContext context) {
     final hasSeenWelcome = ref.watch(hasSeenWelcomeProvider);
     final isLocked = ref.watch(isLockedProvider);
+    final themeMode = ref.watch(themeModeProvider);
     // Kick off purchase-service init (product details, restore purchases)
     // once; nothing in the UI needs to await this directly.
     ref.watch(purchaseInitProvider);
@@ -96,6 +97,19 @@ class _AppPostItAppState extends ConsumerState<AppPostItApp>
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
         useMaterial3: true,
       ),
+      // Same brand seed color, just re-derived for dark mode -- the
+      // branded blue/orange app bar and paywall gradient stay fixed
+      // regardless of theme (constants.dart's brandGradient), only the
+      // rest of the Material color scheme (surfaces, text, dialogs)
+      // follows this.
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.teal,
+          brightness: Brightness.dark,
+        ),
+        useMaterial3: true,
+      ),
+      themeMode: themeMode,
       // Runs for every route regardless of navigation depth, so hitting the
       // free-post limit mid-session immediately replaces whatever's on
       // screen with the paywall -- not just what a fresh `home:` swap would

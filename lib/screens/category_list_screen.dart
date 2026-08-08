@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../constants.dart';
 import '../providers/providers.dart';
+import '../widgets/theme_mode_dialog.dart';
 import 'category_edit_screen.dart';
 import 'help/faq_screen.dart';
 import 'help/how_it_works_screen.dart';
@@ -57,6 +58,8 @@ class CategoryListScreen extends ConsumerWidget {
                       ),
                     );
                   }
+                case 'theme':
+                  showThemeModeDialog(context);
               }
             },
             itemBuilder: (context) => const [
@@ -73,6 +76,8 @@ class CategoryListScreen extends ConsumerWidget {
                 value: 'how_to_videos',
                 child: Text('How-to videos'),
               ),
+              PopupMenuDivider(),
+              PopupMenuItem(value: 'theme', child: Text('Theme')),
             ],
             child: const Padding(
               padding: EdgeInsets.symmetric(horizontal: 12),

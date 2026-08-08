@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,6 +10,20 @@ import '../services/purchase_service.dart';
 import '../services/shared_storage.dart';
 
 const hasSeenWelcomeKey = 'has_seen_welcome';
+
+const themeModeKey = 'theme_mode';
+
+ThemeMode themeModeFromPrefsString(String? value) => switch (value) {
+      'light' => ThemeMode.light,
+      'dark' => ThemeMode.dark,
+      _ => ThemeMode.system,
+    };
+
+String themeModeToPrefsString(ThemeMode mode) => switch (mode) {
+      ThemeMode.light => 'light',
+      ThemeMode.dark => 'dark',
+      ThemeMode.system => 'system',
+    };
 
 /// Insertions beyond this many (a saved post actually typed into another
 /// app via the keyboard -- not how many posts are saved) require the
@@ -33,6 +48,21 @@ final hasSeenWelcomeProvider = StateProvider<bool>((ref) {
   final prefs = ref.watch(sharedPreferencesProvider);
   return prefs.getBool(hasSeenWelcomeKey) ?? false;
 });
+
+/// Purely a UI preference, local to this device -- no cross-process
+/// sharing with the keyboard involved, so a plain StateProvider backed by
+/// SharedPreferences is enough (unlike insertCountProvider/
+/// isPremiumProvider above).
+final themeModeProvider = StateProvider<ThemeMode>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return themeModeFromPrefsString(prefs.getString(themeModeKey));
+});
+
+Future<void> setThemeMode(WidgetRef ref, ThemeMode mode) async {
+  final prefs = ref.read(sharedPreferencesProvider);
+  await prefs.setString(themeModeKey, themeModeToPrefsString(mode));
+  ref.read(themeModeProvider.notifier).state = mode;
+}
 
 final databaseProvider = Provider<AppDatabase>((ref) {
   final db = AppDatabase();
