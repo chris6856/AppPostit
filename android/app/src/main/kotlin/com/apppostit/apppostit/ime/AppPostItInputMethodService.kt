@@ -18,6 +18,7 @@ class AppPostItInputMethodService : InputMethodService() {
     private lateinit var usageTracker: UsageTracker
     private lateinit var categoryChipRow: LinearLayout
     private lateinit var postList: LinearLayout
+    private lateinit var remainingInsertsLabel: TextView
     private var categories: List<CategoryRow> = emptyList()
     private var selectedCategoryId: Long? = null
 
@@ -32,6 +33,7 @@ class AppPostItInputMethodService : InputMethodService() {
         val view = LayoutInflater.from(this).inflate(R.layout.keyboard_view, null)
         categoryChipRow = view.findViewById(R.id.category_chip_row)
         postList = view.findViewById(R.id.post_list)
+        remainingInsertsLabel = view.findViewById(R.id.remaining_inserts_label)
         view.findViewById<ImageButton>(R.id.switch_keyboard_button).setOnClickListener {
             val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
             imm.showInputMethodPicker()
@@ -47,6 +49,7 @@ class AppPostItInputMethodService : InputMethodService() {
     private fun refreshCategories() {
         categoryChipRow.removeAllViews()
         postList.removeAllViews()
+        updateRemainingInsertsLabel()
 
         val isLocked = !purchaseStatusReader.isPremium() &&
             usageTracker.getInsertCount() >= FREE_INSERT_LIMIT
@@ -113,6 +116,7 @@ class AppPostItInputMethodService : InputMethodService() {
             row.setOnClickListener {
                 currentInputConnection?.commitText(post.body, 1)
                 usageTracker.recordInsert()
+                updateRemainingInsertsLabel()
                 if (!purchaseStatusReader.isPremium() &&
                     usageTracker.getInsertCount() >= FREE_INSERT_LIMIT
                 ) {
@@ -121,6 +125,24 @@ class AppPostItInputMethodService : InputMethodService() {
             }
             postList.addView(row)
         }
+    }
+
+    /** Sets expectations before the free-limit empty state and unlock
+     *  screen appear -- hidden once premium (nothing to count down) or
+     *  already locked (the unlock message covers it). */
+    private fun updateRemainingInsertsLabel() {
+        if (purchaseStatusReader.isPremium()) {
+            remainingInsertsLabel.visibility = View.GONE
+            return
+        }
+        val remaining = FREE_INSERT_LIMIT - usageTracker.getInsertCount()
+        if (remaining <= 0) {
+            remainingInsertsLabel.visibility = View.GONE
+            return
+        }
+        remainingInsertsLabel.visibility = View.VISIBLE
+        remainingInsertsLabel.text =
+            "$remaining free insert${if (remaining == 1) "" else "s"} left"
     }
 
     private fun addEmptyMessage(container: LinearLayout, message: String) {

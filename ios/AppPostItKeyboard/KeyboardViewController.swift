@@ -23,6 +23,7 @@ final class KeyboardViewController: UIInputViewController {
     private var categories: [CategoryRow] = []
     private var selectedCategoryId: Int64?
 
+    private let remainingLabel = UILabel()
     private let chipScrollView = UIScrollView()
     private let chipStack = UIStackView()
     private let postScrollView = UIScrollView()
@@ -59,6 +60,11 @@ final class KeyboardViewController: UIInputViewController {
             root.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -8),
             view.heightAnchor.constraint(equalToConstant: 260),
         ])
+
+        remainingLabel.font = .systemFont(ofSize: 11)
+        remainingLabel.textColor = .secondaryLabel
+        remainingLabel.isHidden = true
+        root.addArrangedSubview(remainingLabel)
 
         // Top bar: category chips + switch-keyboard button (required
         // whenever more than one keyboard is enabled).
@@ -112,6 +118,7 @@ final class KeyboardViewController: UIInputViewController {
     private func refresh() {
         chipStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
         postStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
+        updateRemainingLabel()
 
         // Writing to the App Group container (tracking insert count, so
         // the free-tier limit can be enforced) requires Full Access --
@@ -192,6 +199,7 @@ final class KeyboardViewController: UIInputViewController {
     private func insertPost(_ post: PostRow) {
         textDocumentProxy.insertText(post.body)
         usageTracker.recordInsert()
+        updateRemainingLabel()
         if !purchaseStatusReader.isPremium() && usageTracker.getInsertCount() >= freeInsertLimit {
             refresh()
         }
@@ -200,6 +208,23 @@ final class KeyboardViewController: UIInputViewController {
     @objc private func categoryTapped(_ sender: UIButton) {
         selectedCategoryId = Int64(sender.tag)
         refresh()
+    }
+
+    /// Sets expectations before the free-limit empty state and unlock
+    /// screen appear -- hidden once premium (nothing to count down) or
+    /// already locked (the unlock message covers it).
+    private func updateRemainingLabel() {
+        if purchaseStatusReader.isPremium() {
+            remainingLabel.isHidden = true
+            return
+        }
+        let remaining = freeInsertLimit - usageTracker.getInsertCount()
+        guard remaining > 0 else {
+            remainingLabel.isHidden = true
+            return
+        }
+        remainingLabel.isHidden = false
+        remainingLabel.text = "\(remaining) free insert\(remaining == 1 ? "" : "s") left"
     }
 
     private func addEmptyMessage(to stack: UIStackView, text: String) {
