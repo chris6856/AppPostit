@@ -4,11 +4,36 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../constants.dart';
 import '../providers/providers.dart';
 
-class PaywallScreen extends ConsumerWidget {
+class PaywallScreen extends ConsumerStatefulWidget {
   const PaywallScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PaywallScreen> createState() => _PaywallScreenState();
+}
+
+class _PaywallScreenState extends ConsumerState<PaywallScreen> {
+  bool _restoring = false;
+
+  Future<void> _restorePurchase() async {
+    setState(() => _restoring = true);
+    final restored = await ref
+        .read(purchaseServiceProvider)
+        .restorePurchases();
+    if (!mounted) return;
+    setState(() => _restoring = false);
+    // If a purchase was restored, isPremiumProvider is already true by
+    // now and this screen is about to be replaced -- the message would
+    // just flash and disappear, so only show it for the "nothing found"
+    // case, which otherwise has no feedback at all.
+    if (!restored) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No previous purchase found to restore.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final service = ref.watch(purchaseServiceProvider);
     final price = service.productDetails?.price ?? r'$2.99';
 
@@ -71,10 +96,16 @@ class PaywallScreen extends ConsumerWidget {
                           SizedBox(
                             width: double.infinity,
                             child: TextButton(
-                              onPressed: () => ref
-                                  .read(purchaseServiceProvider)
-                                  .restorePurchases(),
-                              child: const Text('Restore purchase'),
+                              onPressed: _restoring ? null : _restorePurchase,
+                              child: _restoring
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : const Text('Restore purchase'),
                             ),
                           ),
                         ],

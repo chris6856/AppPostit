@@ -60,12 +60,22 @@ class PurchaseService {
     }
   }
 
-  Future<void> restorePurchases() async {
+  /// Returns whether a premium purchase was found and restored. The
+  /// paywall only ever shows when the user isn't already premium, so if
+  /// [kIsPremiumKey] is true after this call, it must have just been set
+  /// by the restore -- there's no other way it could have flipped.
+  Future<bool> restorePurchases() async {
     try {
       await _iap.restorePurchases();
     } catch (_) {
-      // Nothing to restore, or purchases unavailable -- no-op.
+      // Fall through -- still check storage in case a purchase update
+      // arrived before the error (some platforms report errors for
+      // reasons unrelated to whether anything was actually restored).
     }
+    // Give any purchaseStream events the restore call triggered a moment
+    // to finish processing (setting is_premium) before checking.
+    await Future.delayed(const Duration(milliseconds: 500));
+    return await _storage.getBool(kIsPremiumKey) ?? false;
   }
 
   Future<void> _handlePurchaseUpdates(List<PurchaseDetails> purchases) async {
