@@ -36,85 +36,121 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
   Widget build(BuildContext context) {
     final service = ref.watch(purchaseServiceProvider);
     final price = service.productDetails?.price ?? r'$2.99';
+    // This screen is reached two ways: as an unskippable takeover once the
+    // free limit is actually reached (via MaterialApp.builder in
+    // main.dart -- nothing here navigates to it directly for that case),
+    // and as a normal pushed route when someone opens it voluntarily from
+    // User Management, e.g. to buy early, or so App Review can find the
+    // IAP without first configuring and using the keyboard extension.
+    // isLocked tells these apart regardless of which way it was reached.
+    final isLocked = ref.watch(isLockedProvider);
 
     return Scaffold(
       body: DecoratedBox(
         decoration: const BoxDecoration(gradient: brandGradient),
         child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: Image.asset(
-                      'assets/icon/app_icon.png',
-                      width: 96,
-                      height: 96,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Card(
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "You've used your $kFreeInsertLimit free inserts!",
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.copyWith(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "You've reached the free limit. Unlock "
-                            'unlimited posting to keep going.',
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                          const SizedBox(height: 24),
-                          SizedBox(
-                            width: double.infinity,
-                            child: FilledButton(
-                              onPressed: () =>
-                                  ref.read(purchaseServiceProvider).buyPremium(),
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 12),
-                                child: Text('Unlock for $price'),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            width: double.infinity,
-                            child: TextButton(
-                              onPressed: _restoring ? null : _restorePurchase,
-                              child: _restoring
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Text('Restore purchase'),
-                            ),
-                          ),
-                        ],
+          child: Stack(
+            children: [
+              Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(24),
+                        child: Image.asset(
+                          'assets/icon/app_icon.png',
+                          width: 96,
+                          height: 96,
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 24),
+                      Card(
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isLocked
+                                    ? "You've used your $kFreeInsertLimit "
+                                        'free inserts!'
+                                    : 'Unlock Unlimited Posts',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineSmall
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                isLocked
+                                    ? "You've reached the free limit. "
+                                        'Unlock unlimited posting to keep '
+                                        'going.'
+                                    : 'Save and insert as many posts as '
+                                        "you'd like, with no free-tier "
+                                        'limit.',
+                                style: Theme.of(context).textTheme.bodyLarge,
+                              ),
+                              const SizedBox(height: 24),
+                              SizedBox(
+                                width: double.infinity,
+                                child: FilledButton(
+                                  onPressed: () => ref
+                                      .read(purchaseServiceProvider)
+                                      .buyPremium(),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
+                                    child: Text('Unlock for $price'),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                child: TextButton(
+                                  onPressed:
+                                      _restoring ? null : _restorePurchase,
+                                  child: _restoring
+                                      ? const SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Text('Restore purchase'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
+              // Only when reached voluntarily -- if actually locked, there's
+              // nowhere to go back to (MaterialApp.builder would just show
+              // this screen again immediately).
+              if (!isLocked)
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    tooltip: 'Close',
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ),
+            ],
           ),
         ),
       ),

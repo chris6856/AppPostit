@@ -9,6 +9,7 @@ import 'category_edit_screen.dart';
 import 'help/faq_screen.dart';
 import 'help/how_it_works_screen.dart';
 import 'help/keyboard_setup_screen.dart';
+import 'paywall_screen.dart';
 import 'post_list_screen.dart';
 
 class CategoryListScreen extends ConsumerWidget {
@@ -18,6 +19,7 @@ class CategoryListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final categoriesAsync = ref.watch(categoriesStreamProvider);
     final scheme = Theme.of(context).colorScheme;
+    final isPremium = ref.watch(isPremiumProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -60,24 +62,33 @@ class CategoryListScreen extends ConsumerWidget {
                   }
                 case 'theme':
                   showThemeModeDialog(context);
+                case 'unlock':
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const PaywallScreen()),
+                  );
               }
             },
-            itemBuilder: (context) => const [
-              PopupMenuItem(
+            itemBuilder: (context) => [
+              const PopupMenuItem(
                 value: 'keyboard_setup',
                 child: Text('How to setup interactive keyboard'),
               ),
-              PopupMenuItem(
+              const PopupMenuItem(
                 value: 'how_it_works',
                 child: Text('App basic operation'),
               ),
-              PopupMenuItem(value: 'faq', child: Text('FAQ')),
-              PopupMenuItem(
+              const PopupMenuItem(value: 'faq', child: Text('FAQ')),
+              const PopupMenuItem(
                 value: 'how_to_videos',
                 child: Text('How-to videos'),
               ),
-              PopupMenuDivider(),
-              PopupMenuItem(value: 'theme', child: Text('Theme')),
+              const PopupMenuDivider(),
+              const PopupMenuItem(value: 'theme', child: Text('Theme')),
+              if (!isPremium)
+                const PopupMenuItem(
+                  value: 'unlock',
+                  child: Text('Unlock Unlimited Posts'),
+                ),
             ],
             child: const Padding(
               padding: EdgeInsets.symmetric(horizontal: 12),
