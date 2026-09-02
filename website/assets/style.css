@@ -558,6 +558,7 @@ section { padding: 100px 0; }
 .store-badge small { display: block; font-size: 0.7rem; opacity: 0.75; letter-spacing: 0.04em; text-transform: uppercase; }
 .store-badge strong { display: block; font-size: 1.05rem; }
 .store-badge.disabled { opacity: 0.6; cursor: default; }
+.store-badge:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.4); }
 
 /* ---------- Footer ---------- */
 
