@@ -35,7 +35,7 @@ class _PaywallScreenState extends ConsumerState<PaywallScreen> {
   @override
   Widget build(BuildContext context) {
     final service = ref.watch(purchaseServiceProvider);
-    final price = service.productDetails?.price ?? r'$2.99';
+    final price = service.productDetails?.price ?? r'$0.99';
     // This screen is reached two ways: as an unskippable takeover once the
     // free limit is actually reached (via MaterialApp.builder in
     // main.dart -- nothing here navigates to it directly for that case),
