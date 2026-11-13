@@ -41,6 +41,8 @@ dependencies:
   url_launcher: ^6.3.2
   shared_preferences: ^2.5.5
   in_app_purchase: ^3.3.0
+  http: ^1.6.0
+  in_app_purchase_android: 0.5.2
 
 dev_dependencies:
   flutter_test:

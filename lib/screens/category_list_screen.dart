@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../constants.dart';
 import '../providers/providers.dart';
+import '../widgets/reply_packs_sheet.dart';
 import '../widgets/theme_mode_dialog.dart';
 import 'category_edit_screen.dart';
 import 'help/faq_screen.dart';
@@ -11,6 +12,7 @@ import 'help/how_it_works_screen.dart';
 import 'help/keyboard_setup_screen.dart';
 import 'paywall_screen.dart';
 import 'post_list_screen.dart';
+import 'smart_reply_screen.dart';
 
 class CategoryListScreen extends ConsumerWidget {
   const CategoryListScreen({super.key});
@@ -28,6 +30,18 @@ class CategoryListScreen extends ConsumerWidget {
         flexibleSpace: Opacity(
           opacity: 0.5,
           child: Image.asset('assets/icon/app_icon.png', fit: BoxFit.cover),
+        ),
+        titleSpacing: 4,
+        title: TextButton.icon(
+          style: TextButton.styleFrom(foregroundColor: Colors.white),
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const SmartReplyScreen()),
+          ),
+          icon: const Icon(Icons.auto_awesome),
+          label: const Text(
+            'Smart Reply',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
         ),
         actions: [
           PopupMenuButton<String>(
@@ -66,6 +80,8 @@ class CategoryListScreen extends ConsumerWidget {
                   Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const PaywallScreen()),
                   );
+                case 'reply_packs':
+                  showReplyPacksSheet(context);
               }
             },
             itemBuilder: (context) => [
@@ -89,6 +105,10 @@ class CategoryListScreen extends ConsumerWidget {
                   value: 'unlock',
                   child: Text('Unlock Unlimited Posts'),
                 ),
+              const PopupMenuItem(
+                value: 'reply_packs',
+                child: Text('Buy Smart Replies'),
+              ),
             ],
             child: const Padding(
               padding: EdgeInsets.symmetric(horizontal: 12),

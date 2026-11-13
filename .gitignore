@@ -3,6 +3,7 @@
 
 # Website secrets -- never commit API keys
 website/sendgrid-config.php
+website/anthropic-config.php
 
 # Miscellaneous
 *.class

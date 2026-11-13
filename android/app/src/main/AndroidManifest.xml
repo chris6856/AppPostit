@@ -2,6 +2,10 @@
     <!-- Required for the in_app_purchase plugin's Google Play Billing
          integration (the unlock-unlimited-posts purchase). -->
     <uses-permission android:name="com.android.vending.BILLING" />
+    <!-- Smart Reply sends the pasted message to apppostit.com to draft a
+         reply. Debug builds get this permission implicitly; release
+         builds need it declared. -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:label="AppPostIt"

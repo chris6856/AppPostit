@@ -5,9 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/database.dart';
 import '../data/repositories/category_repository.dart';
+import '../data/reply_profiles.dart';
 import '../data/repositories/post_repository.dart';
 import '../services/purchase_service.dart';
 import '../services/shared_storage.dart';
+import '../services/smart_reply_service.dart';
 
 const hasSeenWelcomeKey = 'has_seen_welcome';
 
@@ -114,6 +116,8 @@ final purchaseServiceProvider = Provider<PurchaseService>((ref) {
   final service = PurchaseService(
     storage,
     onPremiumUnlocked: () => ref.read(isPremiumProvider.notifier).state = true,
+    onRepliesPurchased: (purchaseKey, replies) =>
+        grantPurchasedReplies(ref, purchaseKey, replies),
   );
   ref.onDispose(service.dispose);
   return service;
@@ -132,3 +136,144 @@ final isLockedProvider = Provider<bool>((ref) {
   final count = ref.watch(insertCountProvider);
   return count >= kFreeInsertLimit;
 });
+
+// ---- Smart Reply -------------------------------------------------------
+
+/// Free Smart Reply generations (Generate, Regenerate and Shorten each
+/// count) every install gets as a trial. After that, replies come from
+/// purchased packs (kReplyPackCredits) -- the one-time posts unlock does
+/// not include Smart Reply, since every generation costs real API fees.
+/// Everyone is also capped at 25 per day by the server (smart-reply.php,
+/// SMART_REPLY_DEVICE_DAILY_LIMIT in anthropic-config.php).
+const int kFreeSmartReplyLimit = 3;
+
+/// Free trial generations used so far.
+const String smartReplyCountKey = 'smart_reply_count';
+
+/// Purchased replies not yet used. Kept on this device only: consumable
+/// purchases aren't restorable from the stores, so a reinstall loses them.
+const String smartReplyCreditsKey = 'smart_reply_credits';
+
+/// Recent pack transaction IDs already credited, so a store redelivering
+/// an unfinished transaction doesn't credit it twice.
+const String creditedPackPurchasesKey = 'smart_reply_credited_purchases';
+
+const String smartReplyConsentKey = 'smart_reply_consent';
+
+final smartReplyCountProvider = StateProvider<int>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return prefs.getInt(smartReplyCountKey) ?? 0;
+});
+
+final smartReplyCreditsProvider = StateProvider<int>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return prefs.getInt(smartReplyCreditsKey) ?? 0;
+});
+
+final freeSmartRepliesLeftProvider = Provider<int>((ref) {
+  final used = ref.watch(smartReplyCountProvider);
+  return (kFreeSmartReplyLimit - used).clamp(0, kFreeSmartReplyLimit);
+});
+
+/// Everything the user can still generate: free trial plus purchased.
+final smartRepliesRemainingProvider = Provider<int>((ref) =>
+    ref.watch(freeSmartRepliesLeftProvider) +
+    ref.watch(smartReplyCreditsProvider));
+
+/// Uses one reply after a successful generation: free trial first, then
+/// purchased credits.
+Future<void> recordSmartReplyUse(WidgetRef ref) async {
+  final prefs = ref.read(sharedPreferencesProvider);
+  if (ref.read(freeSmartRepliesLeftProvider) > 0) {
+    final next = ref.read(smartReplyCountProvider) + 1;
+    await prefs.setInt(smartReplyCountKey, next);
+    ref.read(smartReplyCountProvider.notifier).state = next;
+    return;
+  }
+  final credits = ref.read(smartReplyCreditsProvider);
+  final next = credits > 0 ? credits - 1 : 0;
+  await prefs.setInt(smartReplyCreditsKey, next);
+  ref.read(smartReplyCreditsProvider.notifier).state = next;
+}
+
+/// Credits a purchased pack once per store transaction.
+Future<void> grantPurchasedReplies(
+  Ref ref,
+  String purchaseKey,
+  int replies,
+) async {
+  final prefs = ref.read(sharedPreferencesProvider);
+  final credited = prefs.getStringList(creditedPackPurchasesKey) ?? [];
+  if (credited.contains(purchaseKey)) return;
+
+  final next = ref.read(smartReplyCreditsProvider) + replies;
+  await prefs.setInt(smartReplyCreditsKey, next);
+  final recent = [...credited, purchaseKey];
+  await prefs.setStringList(
+    creditedPackPurchasesKey,
+    recent.length > 100 ? recent.sublist(recent.length - 100) : recent,
+  );
+  ref.read(smartReplyCreditsProvider.notifier).state = next;
+}
+
+/// Whether the user has agreed to their pasted text being sent to the AI
+/// service (required by App Store Guideline 5.1.2(i) before sharing data
+/// with a third-party AI).
+final smartReplyConsentProvider = StateProvider<bool>((ref) {
+  final prefs = ref.watch(sharedPreferencesProvider);
+  return prefs.getBool(smartReplyConsentKey) ?? false;
+});
+
+Future<void> grantSmartReplyConsent(WidgetRef ref) async {
+  final prefs = ref.read(sharedPreferencesProvider);
+  await prefs.setBool(smartReplyConsentKey, true);
+  ref.read(smartReplyConsentProvider.notifier).state = true;
+}
+
+final smartReplyServiceProvider = Provider<SmartReplyService>((ref) {
+  final service = SmartReplyService(ref.watch(sharedPreferencesProvider));
+  ref.onDispose(service.dispose);
+  return service;
+});
+
+class CustomReplyProfiles extends Notifier<List<ReplyProfile>> {
+  @override
+  List<ReplyProfile> build() {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    return decodeCustomProfiles(prefs.getString(customReplyProfilesKey));
+  }
+
+  Future<void> _save(List<ReplyProfile> profiles) async {
+    state = profiles;
+    await ref
+        .read(sharedPreferencesProvider)
+        .setString(customReplyProfilesKey, encodeCustomProfiles(profiles));
+  }
+
+  Future<ReplyProfile> add(String name, String instructions) async {
+    final profile = ReplyProfile(
+      id: 'custom_${DateTime.now().microsecondsSinceEpoch}',
+      name: name,
+      instructions: instructions,
+    );
+    await _save([...state, profile]);
+    return profile;
+  }
+
+  Future<void> edit(ReplyProfile updated) => _save([
+        for (final p in state) p.id == updated.id ? updated : p,
+      ]);
+
+  Future<void> remove(String id) =>
+      _save(state.where((p) => p.id != id).toList());
+}
+
+final customReplyProfilesProvider =
+    NotifierProvider<CustomReplyProfiles, List<ReplyProfile>>(
+  CustomReplyProfiles.new,
+);
+
+final allReplyProfilesProvider = Provider<List<ReplyProfile>>((ref) => [
+      ...builtInReplyProfiles,
+      ...ref.watch(customReplyProfilesProvider),
+    ]);

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../providers/providers.dart' show kFreeSmartReplyLimit;
+
 /// Starter FAQ content -- edit this list to add, remove, or reword entries.
 const List<({String question, String answer})> _faqs = [
   (
@@ -10,8 +12,31 @@ const List<({String question, String answer})> _faqs = [
   ),
   (
     question: 'Where is my data stored?',
-    answer: 'Everything is saved locally on your device only -- there is '
-        'no account and nothing is sent to the cloud.',
+    answer: 'Your categories and posts are saved locally on your device '
+        'only -- there is no account. The one exception is Smart Reply: '
+        'when you ask our assistant for a reply, the message you pasted '
+        '(and any saved posts you chose as reference) is sent to it to '
+        "draft the reply. AppPostIt doesn't store it. Our assistant is "
+        'powered by Claude, an AI service from Anthropic.',
+  ),
+  (
+    question: 'What is Smart Reply?',
+    answer: 'Tap Smart Reply on the home screen, paste a message you '
+        'received (an email, post, comment or text), pick a response '
+        'profile and tone, and tap Ask Our Assistant. You can edit the draft, '
+        'shorten it, regenerate it, copy it, or save it as a post. Create '
+        'your own profiles with the tune button next to the profile list. '
+        'You get $kFreeSmartReplyLimit free replies to try it.',
+  ),
+  (
+    question: 'How do I get more Smart Replies?',
+    answer: 'Tap "Get more replies" on the Smart Reply screen (or Buy '
+        'Smart Replies under User Management) and pick a pack of 50 or '
+        '125 replies. You pay through your Apple or Google account. '
+        'Generate, Shorten and Regenerate each use one reply. Packs never '
+        'expire, but they are stored on your device and are not restored '
+        'if you delete and reinstall the app. Smart Replies are separate '
+        'from the one-time unlimited posts unlock.',
   ),
   (
     question: "Why can't I type freely with the AppPostIt keyboard?",
