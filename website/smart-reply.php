@@ -33,6 +33,13 @@ if (!file_exists($configPath)) {
 }
 require $configPath;
 
+foreach (['ANTHROPIC_API_KEY', 'SMART_REPLY_APP_TOKEN', 'SMART_REPLY_DEVICE_DAILY_LIMIT', 'SMART_REPLY_IP_DAILY_LIMIT', 'SMART_REPLY_GLOBAL_DAILY_LIMIT'] as $setting) {
+    if (!defined($setting)) {
+        error_log("smart-reply: $setting is missing from anthropic-config.php");
+        fail(503, 'Smart Reply is not configured on the server yet.');
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     fail(405, 'Use POST.');
 }
